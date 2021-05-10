@@ -1,0 +1,146 @@
+File: risk-board.png
+Continent: North America
+	Countries: Alaska, Northwest Territory, Greenland, Alberta, Ontario, Quebec, Western United States, Eastern United States, Central America
+	Value: 5
+Continent: South America
+	Countries: Venezuela, Peru, Brazil, Argentina
+	Value: 2
+Continent: Europe
+	Countries: Iceland, Scandinavia, Great Britain, Northern Europe, Ukraine, Western Europe, Southern Europe
+	Value: 5
+Continent: Africa
+	Countries: North Africa, Egypt, Congo, East Africa, South Africa, Madagascar
+	Value: 3
+Continent: Asia
+	Countries: Ural, Siberia, Yakutsk, Kamchatka, Irkutsk, Mongolia, Japan, Afghanistan, China, Middle East, India, Siam
+	Value: 7
+Continent: Australia
+	Countries: Indonesia, New Guinea, Western Australia, Eastern Australia
+	Value: 2
+EndContinents
+Country: Alaska
+	Bordering: Kamchatka, Northwest Territory, Alberta
+	Coord: 70, 100
+Country: Northwest Territory 
+	Bordering: Alaska, Alberta, Ontario, Greenland
+	Coord: 160, 100
+Country: Greenland
+	Bordering: Northwest Territory, Ontario, Quebec, Iceland
+	Coord: 350, 70
+Country: Alberta
+	Bordering: Alaska, Northwest Territory, Ontario, Western United States
+	Coord: 150, 150
+Country: Ontario
+	Bordering: Northwest Territory, Greenland, Alberta, Quebec, Western United States, Eastern United States
+	Coord: 220, 170
+Country: Quebec
+	Bordering: Ontario, Greenland, Eastern United States
+	Coord: 290, 170
+Country: Western United States
+	Bordering: Alberta, Ontario, Eastern United States, Central America
+	Coord: 150, 230
+Country: Eastern United States
+	Bordering: Ontario, Quebec, Western United States, Central America
+	Coord: 230, 250
+Country: Central America
+	Bordering: Western United States, Eastern United States, Venezuela
+	Coord: 150, 290
+Country: Venezuela 
+	Bordering: Central America, Peru, Brazil
+	Coord: 240, 380
+Country: Peru
+	Bordering: Venezuela, Brazil, Argentina
+	Coord: 320, 440
+Country: Brazil
+	Bordering: Venezuela, Peru, Argentina, North Africa
+	Coord: 250, 470
+Country: Argentina
+	Bordering: Peru, Brazil
+	Coord: 260, 530
+Country: North Africa
+	Bordering: Brazil, Western Europe, Southern Europe, Egypt, Congo, East Africa
+	Coord: 470, 420
+Country: Egypt
+	Bordering: North Africa, Southern Europe, Middle East, East Africa
+	Coord: 545, 385
+Country: Congo
+	Bordering: North Africa, East Africa, South Africa
+	Coord: 550, 500
+Country: East Africa
+	Bordering: North Africa, Egypt, Congo, South Africa, Madagascar, Middle East
+	Coord: 590, 450
+Country: South Africa
+	Bordering: Congo, East Africa, Madagascar
+	Coord: 550, 590
+Country: Madagascar
+	Bordering: East Africa, South Africa
+	Coord: 640, 590
+Country: Iceland
+	Bordering: Greenland, Great Britain, Scandinavia
+	Coord: 430, 135
+Country: Great Britain
+	Bordering: Iceland, Scandinavia, Northern Europe, Western Europe
+	Coord: 425, 220
+Country: Scandinavia 
+	Bordering: Iceland, Great Britain, Northern Europe, Ukraine
+	Coord: 505, 130
+Country: Northern Europe
+	Bordering: Great Britain, Scandinavia, Ukraine, Western Europe, Southern Europe
+	Coord: 505, 220
+Country: Ukraine
+	Bordering: Scandinavia, Northern Europe, Southern Europe, Ural, Afghanistan, Middle East
+	Coord: 590, 190
+Country: Western Europe
+	Bordering: Great Britain, Northern Europe, Southern Europe, North Africa
+	Coord: 450, 280
+Country: Southern Europe
+	Bordering: Western Europe, Northern Europe, Ukraine, North Africa, Egypt, Middle East
+	Coord: 510, 280
+Country: Ural
+	Bordering: Ukraine, Afghanistan, Siberia, China
+	Coord: 690, 150
+Country: Siberia
+	Bordering: Ural, Yakutsk, Irkutsk, Mongolia, China
+	Coord: 750, 120
+Country: Yakutsk
+	Bordering: Siberia, Irkutsk, Kamchatka
+	Coord: 825, 80
+Country: Kamchatka
+	Bordering: Yakutsk, Irkutsk, Mongolia, Japan, Alaska
+	Coord: 900, 90
+Country: Irkutsk
+	Bordering: Siberia, Yakutsk, Kamchatka, Mongolia
+	Coord: 810, 165
+Country: Mongolia
+	Bordering: Siberia, Irkutsk, Kamchatka, Japan, China
+	Coord: 820, 230
+Country: Japan
+	Bordering: Kamchatka, Mongolia
+	Coord: 922, 240
+Country: Afghanistan
+	Bordering: Ukraine, Ural, China, Middle East, India
+	Coord: 680, 250
+Country: China
+	Bordering: Afghanistan, Ural, Siberia, Mongolia, India, Siam
+	Coord: 800, 300
+Country: Middle East
+	Bordering: Southern Europe, Ukraine, Afghanistan, Egypt, East Africa, India
+	Coord: 620, 350
+Country: India
+	Bordering: Middle East, Afghanistan, China, Siam
+	Coord: 740, 350
+Country: Siam
+	Bordering: India, China, Indonesia
+	Coord: 810, 370
+Country: Indonesia: 
+	Bordering: Siam, New Guinea, Western Australia
+	Coord: 835, 480
+Country: New Guinea
+	Bordering: Indonesia, Western Australia, Eastern Australia
+	Coord: 915, 460
+Country: Western Australia
+	Bordering: Indonesia, New Guinea, Eastern Australia
+	Coord: 870, 580
+Country: Eastern Australia 
+	Bordering: New Guinea, Western Australia
+	Coord: 960, 570
