@@ -98,31 +98,45 @@ public class RiskView extends JPanel {
         }
     }
 
+    //Helper method to make the box for the different methods. Since you can't pass
+    //in a function in java there is an if statement for the time the box is used, but
+    //all the other code is resusable
+    private void optionBox(String country, JPanel panel, Integer[] options, String buttonText) {
+        panel.setLocation(panelLocation(countryCoordinates.get(country)));
+        panel.setLayout(new BorderLayout());
+        JComboBox<Integer> comboBox = new JComboBox<>(options);
+        panel.add(comboBox, BorderLayout.NORTH);
+        JButton button = new JButton(buttonText);
+        panel.add(button, BorderLayout.SOUTH);
+        if(game.getCurrentPhase() == Game.Phase.ATTACK && game.getMinimumTroopsDefeatedCountry() == 0) {
+            button.addMouseListener(new AttackClicked(comboBox, panel));
+        } else {
+            button.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent e) {
+                    int selectedNumber = (int) comboBox.getSelectedItem();
+                    if (game.getCurrentPhase() == Game.Phase.DRAFT) {
+                        game.reinforceTroops(selectedNumber, country);
+                    } else if(game.getMinimumTroopsDefeatedCountry() != 0) {
+                        game.setTroopsDefeatedCountry(selectedNumber);
+                    } else if(game.getCurrentPhase() == Game.Phase.FORTIFY) {
+                        game.fortifyTroops(currentFortifyCountry, currentFortifiedCountry, selectedNumber);
+                    }
+                    clearAndReset(panel.getParent());
+                }
+            });
+        }
+        panel.setSize(panel.getPreferredSize());
+        if(panel.getParent() == null) {
+            add(panel);
+            revalidate();
+        }
+    }
     private void handleDraftMouseClick(String country) {
         Integer[] possibleTroops = new Integer[game.getCurrentReinforcementTroopsNumber()];
         for(int i = 0; i < possibleTroops.length; i++) {
             possibleTroops[i] = i + 1;
         }
-        JPanel reinforcement = new JPanel();
-        reinforcement.setLocation(panelLocation(countryCoordinates.get(country)));
-
-        reinforcement.setLayout(new BorderLayout());
-        JComboBox<Integer> comboBox = new JComboBox<>(possibleTroops);
-        reinforcement.add(comboBox, BorderLayout.NORTH);
-        JButton button = new JButton("Confirm");
-        button.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                int troopNumber = (int) comboBox.getSelectedItem();
-                game.reinforceTroops(troopNumber, country);
-                clearAndReset(reinforcement.getParent());
-                //This only removes if you clicked on the confirm button
-                //Different code needed to remove if you clicked off of it.
-            }
-        });
-        reinforcement.add(button, BorderLayout.SOUTH);
-        reinforcement.setSize(reinforcement.getPreferredSize());
-        add(reinforcement);
-        revalidate();
+        optionBox(country, new JPanel(), possibleTroops, "Confirm");
     }
 
     private void handleAttackMouseClick(String country) {
@@ -161,16 +175,8 @@ public class RiskView extends JPanel {
         for(int i = 0; i < possibleDice.length; i++) {
             possibleDice[i] = i + 1;
         }
-        JComboBox<Integer> attackDiceNumber = new JComboBox<>(possibleDice);
-        JButton attackButton = new JButton("Attack");
-        JPanel attackPanel = new JPanel(new BorderLayout());
-        attackPanel.add(attackButton, BorderLayout.SOUTH);
-        attackPanel.add(attackDiceNumber, BorderLayout.NORTH);
-        attackPanel.setLocation(panelLocation(countryCoordinates.get(currentAttackCountry)));
-        attackButton.addMouseListener(new AttackClicked(attackDiceNumber, attackPanel));
-        attackPanel.setSize(attackPanel.getPreferredSize());
-        add(attackPanel);
-        revalidate();
+        JPanel panel = new JPanel();
+        optionBox(currentAttackCountry, new JPanel(), possibleDice, "Attack");
     }
 
     //Class to handle the event where the users has confirmed an attack
@@ -201,26 +207,13 @@ public class RiskView extends JPanel {
                 //2. Defender was defeated
                 } else {
                     attackPanel.removeAll();
-                    JButton moveTroopsButton = new JButton("Confirm Troops");
                     int minTroops = game.getMinimumTroopsDefeatedCountry();
                     int maxTroops = game.getTroopCount(currentAttackCountry) - 1;
                     Integer[] possibleTroopsMove = new Integer[maxTroops - minTroops + 1];
                     for(int i = minTroops; i <= maxTroops; i++) {
                         possibleTroopsMove[i - minTroops] = i;
                     }
-                    JPanel moveTroopsPanel = attackPanel;
-                    JComboBox<Integer> numberTroopsMove = new JComboBox<>(possibleTroopsMove);
-                    moveTroopsPanel.add(moveTroopsButton, BorderLayout.SOUTH);
-                    moveTroopsPanel.add(numberTroopsMove, BorderLayout.NORTH);
-                    moveTroopsButton.addMouseListener(new MouseAdapter() {
-                        public void mouseClicked(MouseEvent e) {
-                            game.setTroopsDefeatedCountry((int) numberTroopsMove.getSelectedItem());
-
-                            clearAndReset(moveTroopsPanel.getParent());
-                        }
-                    });
-                    moveTroopsPanel.setPreferredSize(moveTroopsPanel.getPreferredSize());
-
+                    optionBox(currentAttackCountry, attackPanel, possibleTroopsMove, "Confirm Troops");
                 }
             //We need to make sure the dice is updated according to how many troops that the attacker has.
             } else if(game.getTroopCount(currentAttackCountry) <= attackDiceNumber.getItemCount()) {
@@ -249,25 +242,7 @@ public class RiskView extends JPanel {
                 for(int i = 0; i < possibleTroops.length; i++) {
                     possibleTroops[i] = i + 1;
                 }
-                JPanel fortify = new JPanel();
-                fortify.setLocation(panelLocation(countryCoordinates.get(currentFortifiedCountry)));
-                fortify.setLayout(new BorderLayout());
-                JComboBox<Integer> comboBox = new JComboBox<>(possibleTroops);
-                fortify.add(comboBox, BorderLayout.NORTH);
-                JButton button = new JButton("Confirm");
-                button.addMouseListener(new MouseAdapter() {
-                    public void mouseClicked(MouseEvent e) {
-                        int troopNumber = (int) comboBox.getSelectedItem();
-                        game.fortifyTroops(currentFortifyCountry, currentFortifiedCountry, troopNumber);
-                        clearAndReset(fortify.getParent());
-                        //This only removes if you clicked on the confirm button
-                        //Different code needed to remove if you clicked off of it.
-                    }
-                });
-                fortify.add(button, BorderLayout.SOUTH);
-                fortify.setSize(fortify.getPreferredSize());
-                add(fortify);
-                revalidate();
+                optionBox(country, new JPanel(), possibleTroops, "Confirm");
             } else if (viableFortifyCountry(country)) {
                 currentFortifyCountry = country;
                 repaint();
