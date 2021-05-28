@@ -47,13 +47,13 @@ Country: Central America
 	Coord: 150, 290
 Country: Venezuela 
 	Bordering: Central America, Peru, Brazil
-	Coord: 240, 380
+	Coord: 240, 375
 Country: Peru
 	Bordering: Venezuela, Brazil, Argentina
-	Coord: 320, 440
+	Coord: 250, 470
 Country: Brazil
 	Bordering: Venezuela, Peru, Argentina, North Africa
-	Coord: 250, 470
+	Coord: 315, 430
 Country: Argentina
 	Bordering: Peru, Brazil
 	Coord: 260, 530
@@ -80,7 +80,7 @@ Country: Iceland
 	Coord: 430, 135
 Country: Great Britain
 	Bordering: Iceland, Scandinavia, Northern Europe, Western Europe
-	Coord: 425, 220
+	Coord: 422, 225
 Country: Scandinavia 
 	Bordering: Iceland, Great Britain, Northern Europe, Ukraine
 	Coord: 505, 130
@@ -92,7 +92,7 @@ Country: Ukraine
 	Coord: 590, 190
 Country: Western Europe
 	Bordering: Great Britain, Northern Europe, Southern Europe, North Africa
-	Coord: 450, 280
+	Coord: 450, 275
 Country: Southern Europe
 	Bordering: Western Europe, Northern Europe, Ukraine, North Africa, Egypt, Middle East
 	Coord: 510, 280
@@ -116,7 +116,7 @@ Country: Mongolia
 	Coord: 820, 230
 Country: Japan
 	Bordering: Kamchatka, Mongolia
-	Coord: 922, 240
+	Coord: 923, 242
 Country: Afghanistan
 	Bordering: Ukraine, Ural, China, Middle East, India
 	Coord: 680, 250

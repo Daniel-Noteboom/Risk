@@ -193,4 +193,22 @@ public class Board {
       }
    }
 
+   /**
+    * Returns all countries bordering country with name countryName whose occupant is different than the current
+    * country with countryName
+    * @param countryName The name of the country
+    * @return The countries bordering with different occupants
+    */
+   public Set<String> opposingCountries(String countryName) {
+      Country country = countries.get(countryName);
+      Set<Country> borderCountries = borderingCountries.get(country);
+      Set<String> opposingCountries = new HashSet<>();
+      for(Country c: borderCountries) {
+         if(c.getOccupant() != country.getOccupant()) {
+            opposingCountries.add(c.getName());
+         }
+      }
+      return opposingCountries;
+   }
+
 }

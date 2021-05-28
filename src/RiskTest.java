@@ -103,9 +103,9 @@ public class RiskTest {
 
         Board b = new Board(continents, borderingCountries);
         Player[] players = {playerOne, playerTwo, playerThree, playerFour, playerFive};
-        g = new Game(b, players, 0, true);
+        g = new Game(b, players, 0, true, null);
         String[] playerNames = {"one", "two", "three"};
-        riskGame = Risk.createGame(playerNames, 0, "risk_data.txt");
+        riskGame = Risk.createGame(playerNames, 0, "risk_data.txt", false, false);
     }
 
 
@@ -410,7 +410,7 @@ public class RiskTest {
         attackDice.add(6);
         g.endAttackPhase();
         Assert.assertEquals("make sure it is now fortify phase", Game.Phase.FORTIFY, g.getCurrentPhase());
-        g.skipFortifyPhase();
+        g.endFortifyPhase();
         Assert.assertEquals("make sure it is now draft phase", Game.Phase.DRAFT, g.getCurrentPhase());
         Assert.assertTrue(g.reinforceTroops(3, "b"));
         Assert.assertEquals(g.getTroopCount("b"), 5);
@@ -442,15 +442,15 @@ public class RiskTest {
         Assert.assertTrue(g.reinforceTroops(5, "e"));
         Assert.assertEquals(g.getTroopCount("e"), 6);
         g.endAttackPhase();
-        g.skipFortifyPhase();
+        g.endFortifyPhase();
         Assert.assertTrue(g.reinforceTroops(6, "g"));
         Assert.assertEquals(g.getTroopCount("g"), 11);
         g.endAttackPhase();
-        g.skipFortifyPhase();
+        g.endFortifyPhase();
         Assert.assertTrue(g.reinforceTroops(3, "a"));
         Assert.assertEquals(g.getTroopCount("a"), 6);
         g.endAttackPhase();
-        g.skipFortifyPhase();
+        g.endFortifyPhase();
         Assert.assertTrue(g.reinforceTroops(7, "d"));
         Assert.assertEquals(g.getTroopCount("d"), 10);
         Assert.assertTrue(g.attack("d", attackDice, "e", defendDice)); //D: 10 troops, E: 4 troops
@@ -482,11 +482,11 @@ public class RiskTest {
         Assert.assertTrue(g.reinforceTroops(4, "g"));
         Assert.assertEquals(g.getTroopCount("g"), 15);
         g.endAttackPhase();
-        g.skipFortifyPhase();
+        g.endFortifyPhase();
         g.reinforceTroops(3, "a");
         Assert.assertEquals(g.getTroopCount("a"), 9);
         g.endAttackPhase();
-        g.skipFortifyPhase();
+        g.endFortifyPhase();
         Assert.assertTrue(g.reinforceTroops(8, "f"));
         Assert.assertEquals(g.getTroopCount("f"), 13);
         for(int i = 0; i < 7; i++) {
@@ -500,11 +500,11 @@ public class RiskTest {
         Assert.assertEquals(g.getOccupantName("f"), "two");
         Assert.assertEquals(g.getOccupantName("g"), "two");
         g.endAttackPhase();
-        g.skipFortifyPhase();
+        g.endFortifyPhase();
         Assert.assertTrue(g.reinforceTroops(3, "a"));
         Assert.assertEquals(g.getTroopCount("a"), 12);
         g.endAttackPhase();
-        g.skipFortifyPhase();
+        g.endFortifyPhase();
         Assert.assertTrue(g.reinforceTroops(9, "b"));
         defendDice.add(5);
         for(int i = 0; i < 6; i++) {

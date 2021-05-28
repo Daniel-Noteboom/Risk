@@ -33,9 +33,13 @@ public class Game {
    private boolean firstTurn = true;
 
    //Keeps track of post-attack situation
-    private int minimumTroopsDefeatedCountry = 0;
-    private String currentDefeatedCountry;
-    private String currentVictorCountry;
+   private int minimumTroopsDefeatedCountry = 0;
+   private String currentDefeatedCountry;
+   private String currentVictorCountry;
+
+   //Keep track of current attack situation
+   private String currentAttackCountry;
+   private String currentDefendCountry;
 
    //Variables dealing with adding troops on first turn
    private static final int[][] FIRST_TURN_TROOPS = {{0,0,1}, {0,0,0,1}, {0,0,0,1,2}, {0,0,0,1,2,3}};
@@ -48,7 +52,8 @@ public class Game {
    private static final int MAXIMUM_DEFENSE = 2;
    public static final int DICE_SIDES = 6;
 
-
+   private RiskController rC;
+   private boolean usingRC;
    private static final Map<String, Integer> CARD_TROOPS_VALUE;
     static {
         Map<String, Integer> tempMap = new HashMap<String, Integer>();
@@ -62,21 +67,35 @@ public class Game {
 
 
     public Game(Board board, Player[] players, int startingPlayer) {
-      this(board, players, startingPlayer, false);
+      this(board, players, startingPlayer, false, null);
     }
 
     //Creates the game, given the board, players, and a starting player
-    //Set up manually refers to whether the player already has the board preloaded with the stats they want.
-    public Game(Board board, Player[] players, int startingPlayer, boolean setUpManually) {
+    //Set up manually refers to whether the player already has the board preloaded with troops
+    public Game(Board board, Player[] players, int startingPlayer, boolean setUpManually, RiskController rC) {
         this.board = board;
         this.players = players;
         startingPlayerIndex = startingPlayer;
         currentPlayerIndex = startingPlayerIndex;
+        this.rC = rC;
+        usingRC = rC == null ? false : true;
         if(setUpManually) {
             changePhase();
         }
     }
 
+    public List<RiskView> getRiskViews() {
+        return rC.getRiskViews();
+    }
+
+    //Returns list of player's names in order of when they start
+    public List<String> getPlayerOrder() {
+        List<String> playerNamesInOrder = new ArrayList<>();
+        for(int i = startingPlayerIndex; i < startingPlayerIndex + players.length; i++) {
+            playerNamesInOrder.add(players[i % players.length].getName());
+        }
+        return playerNamesInOrder;
+    }
     //Get Troop Count  for the country
     public int getTroopCount(String country) {
       return board.getTroopCount(country);
@@ -107,6 +126,24 @@ public class Game {
         return currentReinforceTroopsNumber;
     }
 
+    public boolean isAttackOver() {
+        return minimumTroopsDefeatedCountry != 0 || getTroopCount(currentAttackCountry) == 1;
+    }
+    public int getAttackDiceLimit(String country) {
+        return Math.min(3, board.getTroopCount(country) - 1);
+    }
+
+    public int getNumberDefendDice(String country) {
+        return Math.min(2, board.getTroopCount(country));
+    }
+    //Returns bordering countries with different occupant of concerned country
+    public Set<String> getOpposingCountries(String country) {
+        return board.opposingCountries(country);
+    }
+
+    public int getMinimumTroopsDefeatedCountry() {
+        return minimumTroopsDefeatedCountry;
+    }
     /** Returns and sets the number of troops that the current player can reinforce with
      * If the game phase is not correct 0 is returned **/
     private int setInitialReinforceTroopNumber() {
@@ -159,6 +196,9 @@ public class Game {
             currentReinforceTroopsNumber -= troops;
             if (currentReinforceTroopsNumber == 0) {
                 changePhase();
+            }
+            if(usingRC) {
+                rC.update();
             }
         }
         return noErrorsReinforce;
@@ -222,6 +262,8 @@ public class Game {
       if(!attackErrorHandling(attackCountry, attackDice, defendCountry, defendDice)) {
           return false;
       }
+      currentAttackCountry = attackCountry;
+      currentDefendCountry = defendCountry;
       List<Integer> sortedAttackDice = new ArrayList<Integer>(attackDice);
       List<Integer> sortedDefendDice = new ArrayList<Integer>(defendDice);
       Collections.sort(sortedAttackDice);
@@ -257,6 +299,9 @@ public class Game {
               minimumTroopsDefeatedCountry = attackDice.size();
           }
       }
+      if(usingRC) {
+         rC.update();
+      }
       return true;
     }
 
@@ -282,6 +327,9 @@ public class Game {
             board.increaseTroops(currentDefeatedCountry, troops);
             board.reduceTroops(currentVictorCountry, troops);
             minimumTroopsDefeatedCountry = 0;
+            if(usingRC) {
+               rC.update();
+            }
             return true;
         } else {
             return false;
@@ -379,7 +427,7 @@ public class Game {
      */
     public Set<String> getCountries(String player) {
         Set<Country> countries = board.countriesOccupied(getPlayer(player));
-        Set<String> countryNames = new HashSet<String>();
+        Set<String> countryNames = new HashSet<>();
         for(Country c: countries) {
             countryNames.add(c.getName());
         }
@@ -428,12 +476,15 @@ public class Game {
             board.reduceTroops(countryFrom, troops);
             board.increaseTroops(countryTo, troops);
             changePhase();
+            if(usingRC) {
+                rC.update();
+            }
         }
         return noErrorsFortify;
     }
 
     //Since a player can choose not to participate in the fortify phase, they may call this method to skip this phase.
-    public void skipFortifyPhase() {
+    public void endFortifyPhase() {
         if(currentPhase == Phase.FORTIFY) {
             changePhase();
         }
