@@ -377,16 +377,315 @@ public class RiskTest {
 
     }
 
-    /**
-     *         Country countryA = new Country("a", 4, playerOne);
-     *         Country countryB = new Country("b", 4, playerTwo);
-     *         Country countryC = new Country("c", 3, playerFour);
-     *         Country countryD = new Country("d", 4, playerThree);
-     *         Country countryE = new Country("e", 1, playerFour);
-     *         Country countryE2 = new Country("e2", 1, playerFour);
-     *         Country countryF = new Country("f", 2, playerFour);
-     *         Country countryG = new Country("g", 5, playerFive);
-     */
+    @Test
+    public void testCardFails() {
+
+//        if (playerCards.size() < CARD_TURN_IN_SIZE) {
+//            System.err.println("ERROR: You must have at least " + CARD_TURN_IN_SIZE + " cards to turn in");
+//            System.err.println("Current number of cards " + players[currentPlayerIndex].getCards().size());
+//            return false;
+//        } else if(turnInCards.size() != CARD_TURN_IN_SIZE) {
+//            System.err.println("ERROR: You must turn in the correct amount of cards");
+//            System.err.println("Card number to turn in: " + CARD_TURN_IN_SIZE);
+//            System.err.println("Cards attempted to turn in " + turnInCards.size());
+//            return false;
+//        } else if(currentPhase != Game.Phase.ATTACK && currentPhase != Game.Phase.DRAFT) {
+//            System.err.println("ERROR: You can only turn in cards in draft or attack phase");
+//            System.err.println("Current phase: " + currentPhase);
+//            return false;
+//        } else if(currentPhase == Game.Phase.ATTACK && playerCards.size() < MAX_CARDS) {
+//            System.err.println("ERROR: You can only turn in cards on attack phase if you have at least " + MAX_CARDS);
+//            System.err.println("Current number cards: " + playerCards.size());
+//            return false;
+//        } else if(new HashSet<>(turnInCards).size() != CARD_TURN_IN_SIZE) {
+//            System.err.println("ERROR: You can't turn in the same card twice");
+//            return false;
+//        }
+//    } else if(players[currentPlayerIndex].getCards().size() >= MAX_CARDS) {
+//        System.err.println("ERROR: You must turn in cards before reinforcing");
+//        return false;
+//    }
+//    } else if (needTurnInCards) {
+//        System.err.println("You need to turn in cards before attacking since you have more than " + MAX_CARDS + " cards");
+//        }
+        List<Integer> attackDice = new ArrayList<>();
+        attackDice.add(6);
+        attackDice.add(6);
+        List<Integer> defendDice = new ArrayList<>();
+        defendDice.add(5);
+        defendDice.add(5);
+
+        List<Card> cards = new ArrayList<>();
+
+        cards.add(new Card(Card.Type.ARTILLERY, "a"));
+        cards.add(new Card(Card.Type.INFANTRY, "b"));
+        cards.add(new Card(Card.Type.ARTILLERY, "c"));
+        cards.add(new Card(Card.Type.INFANTRY, "d"));
+        cards.add(new Card(Card.Type.ALL, "e"));
+        cards.add(new Card(Card.Type.ALL, "f"));
+
+        g.manuallyChangeDeck(cards);
+        g.changeGameState("one", Game.Phase.ATTACK);
+        g.attack("a", attackDice, "b", defendDice);
+        g.changeGameState("one", Game.Phase.DRAFT);
+        for(int i = 0; i < 5; i++) {
+            g.reinforceTroops(3, "a");
+            g.attack("a", attackDice, "b", defendDice);
+            g.setTroopsDefeatedCountry(2);
+            g.endAttackPhase();
+            g.endFortifyPhase();
+            g.changeGameState("three", Game.Phase.DRAFT);
+            g.reinforceTroops(3, "d");
+            g.attack("d", attackDice, "b", defendDice);
+            g.setTroopsDefeatedCountry(2);
+
+            if(i != 4) {
+                g.changeGameState("one", Game.Phase.DRAFT);
+                Assert.assertFalse(g.turnInCards(g.turnInCards()));
+            }
+        }
+
+        g.changeGameState("one", Game.Phase.FORTIFY);
+        Assert.assertFalse(g.turnInCards(g.turnInCards()));
+        g.changeGameState("one", Game.Phase.DRAFT);
+        Assert.assertFalse(g.reinforceTroops(3, "a"));
+        List<Integer> indexes = new ArrayList<>();
+        indexes.add(0);
+        indexes.add(1);
+        indexes.add(2);
+        indexes.add(3);
+        indexes.add(4);
+
+        Assert.assertFalse(g.turnInCards(indexes));
+        indexes.remove(4);
+        Assert.assertFalse(g.turnInCards(indexes));
+        indexes.remove(3);
+        indexes.remove(2);
+        Assert.assertFalse(g.turnInCards(indexes));
+        indexes.add(2);
+        Assert.assertFalse(g.turnInCards(indexes));
+        indexes.remove(2);
+        indexes.add(4);
+        Assert.assertTrue(g.turnInCards(indexes));
+        Assert.assertTrue(g.reinforceTroops(13, "a"));
+
+        g.attack("a", attackDice, "b", defendDice);
+        g.setTroopsDefeatedCountry(2);
+        g.endAttackPhase();
+        g.endFortifyPhase();
+        g.changeGameState("one", Game.Phase.ATTACK);
+        indexes.remove(2);
+        indexes.add(2);
+        Assert.assertFalse(g.turnInCards(indexes));
+        indexes.remove(2);
+        indexes.add(1);
+        g.changeGameState("one", Game.Phase.FORTIFY);
+        Assert.assertFalse(g.turnInCards(indexes));
+
+
+
+
+
+
+
+
+
+    }
+
+
+
+
+/**
+ *         Country countryA = new Country("a", 4, playerOne);
+ *         Country countryB = new Country("b", 4, playerTwo);
+ *         Country countryC = new Country("c", 3, playerFour);
+ *         Country countryD = new Country("d", 4, playerThree);
+ *         Country countryE = new Country("e", 1, playerFour);
+ *         Country countryE2 = new Country("e2", 1, playerFour);
+ *         Country countryF = new Country("f", 2, playerFour);
+ *         Country countryG = new Country("g", 5, playerFive);
+ */
+    @Test
+    public void testCards() {
+        List<Card> cards = new ArrayList<>();
+
+        //1st set of cards to turn in
+        cards.add(new Card(Card.Type.ARTILLERY, "a"));
+        cards.add(new Card(Card.Type.INFANTRY, "b"));
+        cards.add(new Card(Card.Type.ARTILLERY, "c"));
+        cards.add(new Card(Card.Type.ARTILLERY, "a"));
+        cards.add(new Card(Card.Type.ARTILLERY, "b"));
+        cards.add(new Card(Card.Type.CALVARY, "c"));
+
+        //2nd set of cards to turn in
+        cards.add(new Card(Card.Type.ALL, "a"));
+        cards.add(new Card(Card.Type.CALVARY, "b"));
+        cards.add(new Card(Card.Type.ALL, "c"));
+        cards.add(new Card(Card.Type.CALVARY, "a"));
+        cards.add(new Card(Card.Type.CALVARY, "b"));
+        cards.add(new Card(Card.Type.ALL, "c"));
+
+        //3rd set of cards to turn in
+        cards.add(new Card(Card.Type.INFANTRY, "a"));
+        cards.add(new Card(Card.Type.ARTILLERY, "b"));
+        cards.add(new Card(Card.Type.ARTILLERY, "c"));
+        cards.add(new Card(Card.Type.ARTILLERY, "a"));
+        cards.add(new Card(Card.Type.CALVARY, "b"));
+        cards.add(new Card(Card.Type.ARTILLERY, "c"));
+        cards.add(new Card(Card.Type.ARTILLERY, "a"));
+        cards.add(new Card(Card.Type.ALL, "b"));
+        cards.add(new Card(Card.Type.ARTILLERY, "c"));
+
+        g.manuallyChangeDeck(cards);
+
+        //Get the game out of first turn mode
+        g.changeGameState("five", Game.Phase.FORTIFY);
+        g.endFortifyPhase();
+
+        //Make the first attack to get country "b" to have two troops
+        g.changeGameState("one", Game.Phase.ATTACK);
+        List<Integer> attackDice = new ArrayList<>();
+        attackDice.add(6);
+        attackDice.add(6);
+        List<Integer> defendDice = new ArrayList<>();
+        defendDice.add(5);
+        defendDice.add(5);
+        g.attack("a", attackDice, "b", defendDice);
+
+        //Now attack back and forth
+        String[] players = {"one", "four"};
+        String[] countries = {"a", "c"};
+        int[] troopsAdded = {3, 4};
+        for(int i = 0; i < 6; i++) {
+            g.changeGameState(players[i % 2], Game.Phase.DRAFT);
+            g.reinforceTroops(troopsAdded[i % 2], countries[i % 2]);
+            g.attack(countries[i % 2], attackDice, "b", defendDice);
+            g.setTroopsDefeatedCountry(2);
+            g.endAttackPhase();
+            g.endFortifyPhase();
+            Assert.assertEquals(i / 2 + 1, g.getCards(players[i % 2]).size());
+        }
+        int aTroopCount = g.getTroopCount("a");
+        int cTroopCount = g.getTroopCount("c");
+        g.changeGameState("one", Game.Phase.DRAFT);
+        List<Integer> cardIndexes = new ArrayList<>();
+        cardIndexes.add(0);
+        cardIndexes.add(1);
+        cardIndexes.add(2);
+        Assert.assertTrue(g.turnInCards(cardIndexes));
+        //3 + 8
+        Assert.assertEquals(11, g.getCurrentReinforcementTroopsNumber());
+        g.reinforceTroops(11, "a");
+        //Additional two for bonus troops
+        Assert.assertEquals(aTroopCount + 13, g.getTroopCount("a"));
+        g.changeGameState("four", Game.Phase.DRAFT);
+        Assert.assertTrue(g.turnInCards(cardIndexes));
+        //3 + 10 + 1
+        Assert.assertEquals(14, g.getCurrentReinforcementTroopsNumber());
+        g.reinforceTroops(14, "c");
+        //Country b will have two more added troops now
+        Assert.assertEquals(cTroopCount + 14, g.getTroopCount("c"));
+        Assert.assertEquals(4, g.getTroopCount("b"));
+        g.changeGameState("one", Game.Phase.ATTACK);
+        g.attack("a", attackDice, "b", defendDice);
+
+        for(int i = 0; i < 6; i++) {
+            g.changeGameState(players[i % 2], Game.Phase.DRAFT);
+            g.reinforceTroops(troopsAdded[i % 2], countries[i % 2]);
+            g.attack(countries[i % 2], attackDice, "b", defendDice);
+            g.setTroopsDefeatedCountry(2);
+            g.endAttackPhase();
+            g.endFortifyPhase();
+            Assert.assertEquals(i / 2 + 1, g.getCards(players[i % 2]).size());
+        }
+        aTroopCount = g.getTroopCount("a");
+        cTroopCount = g.getTroopCount("c");
+        g.changeGameState("one", Game.Phase.DRAFT);
+        Assert.assertTrue(g.turnInCards(cardIndexes));
+        //3 + 10
+        Assert.assertEquals(13, g.getCurrentReinforcementTroopsNumber());
+        g.reinforceTroops(13, "a");
+        //Additional two for bonus troops
+        Assert.assertEquals(aTroopCount + 15, g.getTroopCount("a"));
+        g.changeGameState("four", Game.Phase.DRAFT);
+        Assert.assertTrue(g.turnInCards(cardIndexes));
+        //3 + 6 + 1
+        Assert.assertEquals(10, g.getCurrentReinforcementTroopsNumber());
+        g.reinforceTroops(10, "c");
+        //Country b will have two more added troops now
+        Assert.assertEquals(cTroopCount + 10, g.getTroopCount("c"));
+        Assert.assertEquals(4, g.getTroopCount("b"));
+        g.changeGameState("one", Game.Phase.ATTACK);
+        g.attack("a", attackDice, "b", defendDice);
+
+        for(int i = 0; i < 9; i++) {
+            g.changeGameState(players[i % 2], Game.Phase.DRAFT);
+            g.reinforceTroops(troopsAdded[i % 2], countries[i % 2]);
+            g.attack(countries[i % 2], attackDice, "b", defendDice);
+            g.setTroopsDefeatedCountry(2);
+            g.endAttackPhase();
+            g.endFortifyPhase();
+            Assert.assertEquals(i / 2 + 1, g.getCards(players[i % 2]).size());
+        }
+
+        aTroopCount = g.getTroopCount("a");
+        cTroopCount = g.getTroopCount("c");
+        g.changeGameState("one", Game.Phase.DRAFT);
+        Assert.assertFalse(g.reinforceTroops(3, "a"));
+        Assert.assertTrue(g.turnInCards(g.turnInCards()));
+        Assert.assertEquals(2, g.getCards("one").size());
+        //3 + 10 + 4
+        Assert.assertEquals(17, g.getCurrentReinforcementTroopsNumber());
+        g.reinforceTroops(17, "a");
+        //Additional two for bonus troops
+        Assert.assertTrue((aTroopCount + 19) == g.getTroopCount("a") ||
+                g.getTroopCount("a") == (aTroopCount + 17));
+        g.changeGameState("four", Game.Phase.DRAFT);
+        Assert.assertTrue(g.turnInCards(g.turnInCards()));
+        //3 + 8 + 1
+        Assert.assertEquals(12, g.getCurrentReinforcementTroopsNumber());
+        g.reinforceTroops(12, "c");
+        //Additional two for bonus
+        Assert.assertEquals(cTroopCount + 14, g.getTroopCount("c"));
+        Assert.assertTrue(g.getCards("four").get(0).contains("ALL"));
+        cTroopCount = g.getTroopCount("c");
+        g.changeGameState("one", Game.Phase.ATTACK);
+        for(int i = 0; i < (cTroopCount + 1) / 2; i++) {
+            if(g.getTroopCount("c") == 1) {
+                defendDice.remove(1);
+            }
+            g.attack("a", attackDice, "c", defendDice);
+        }
+        g.setTroopsDefeatedCountry(10);
+        g.endAttackPhase();
+        g.endFortifyPhase();
+        Assert.assertEquals(3, g.getCards("one").size());
+        if(defendDice.size() == 1) {
+            defendDice.add(5);
+        }
+
+        g.changeGameState("one", Game.Phase.ATTACK);
+        g.attack("c", attackDice, "d", defendDice);
+        g.attack("c", attackDice, "d", defendDice);
+        g.setTroopsDefeatedCountry(9);
+        g.endAttackPhase();
+        g.endFortifyPhase();
+        Assert.assertEquals(4, g.getCards("one").size());
+        g.changeGameState("one", Game.Phase.ATTACK);
+        defendDice.remove(1);
+        g.attack("d", attackDice, "e", defendDice);
+        g.setTroopsDefeatedCountry(8);
+        g.attack("e", attackDice, "e2", defendDice);
+        g.setTroopsDefeatedCountry(3);
+        defendDice.add(5);
+        g.attack("e", attackDice, "f", defendDice);
+        Assert.assertFalse(g.setTroopsDefeatedCountry(2));
+        Assert.assertTrue(g.turnInCards(g.turnInCards()));
+        g.setTroopsDefeatedCountry(4);
+
+
+    }
+
     @Test
     public void testFullGameFlow() {
         Assert.assertTrue(g.reinforceTroops(3, "a")); //A: 7 troops

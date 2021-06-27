@@ -10,7 +10,7 @@ public class Board {
    //Maps the name of the country to the country
    private Map<String, Country> countries;
 
-   //The user needs to check for consistency to make sure that the Map of borderin countries is consistent
+   //The user needs to check for consistency to make sure that the Map of bordering countries is consistent
    //(that is, if country A borders country B, then country B should border country A). The set of continents should not
    //contain any country that is not included in the keyList of the Map of borderingCountries. Every country in the keyList
    //should only be in one and only one continent according to the rules of Risk.
@@ -184,6 +184,10 @@ public class Board {
    //Returns the number of countries on the board
    public int numberCountries() {
       return borderingCountries.keySet().size();
+   }
+
+   public Set<String> countryNames() {
+      return countries.keySet();
    }
 
    //Clears the troops for the entire board

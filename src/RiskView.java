@@ -175,7 +175,6 @@ public class RiskView extends JPanel {
         for(int i = 0; i < possibleDice.length; i++) {
             possibleDice[i] = i + 1;
         }
-        JPanel panel = new JPanel();
         optionBox(currentAttackCountry, new JPanel(), possibleDice, "Attack");
     }
 

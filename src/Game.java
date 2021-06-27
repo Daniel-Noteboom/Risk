@@ -1,8 +1,17 @@
 import java.util.*;
 public class Game {
 
-   //The kinds of cards we can have in the game.
-   private static final String[] CARDS = {"Soldier", "Horse", "Tank", "All"};
+   //How many cards of "All" are there in the game
+    public static final int CARD_TYPE_ALL_COUNT = 2;
+    public static final int MAX_CARDS = 5;
+    public static final int CARD_TURN_IN_SIZE = 3;
+    public static final int BONUS_TROOPS_COUNTRY = 2;
+    private boolean needTurnInCards = false;
+    private boolean turnInCardsTest = false;
+    //Keeps track of the different cards.
+    private Queue<Card> deck = new LinkedList<>();
+
+    private List<Card> discardPile = new ArrayList<>();
 
    //Variables dealing with phase of game
     public enum Phase {
@@ -54,16 +63,6 @@ public class Game {
 
    private RiskController rC;
    private boolean usingRC;
-   private static final Map<String, Integer> CARD_TROOPS_VALUE;
-    static {
-        Map<String, Integer> tempMap = new HashMap<String, Integer>();
-        tempMap.put(CARDS[0], 4);
-        tempMap.put(CARDS[1], 6);
-        tempMap.put(CARDS[2], 8);
-        tempMap.put(CARDS[3], 10);
-        
-        CARD_TROOPS_VALUE = Collections.unmodifiableMap(tempMap);
-    }
 
 
     public Game(Board board, Player[] players, int startingPlayer) {
@@ -82,6 +81,148 @@ public class Game {
         if(setUpManually) {
             changePhase();
         }
+        createDeck();
+    }
+
+    /**
+     * For testing purposes only, manually change what you want the deck to be. Should only be used at the beginning of the game,
+     * otherwise it may create strange behavior
+     */
+    public void manuallyChangeDeck(List<Card> cards) {
+        deck.clear();
+        deck.addAll(cards);
+    }
+
+    /**
+     * Helper method that creates the deck for the game. Creates deck with the number of countries and some additional
+     * cards that are of all type category (number is et by the CARD_TYPE_ALL_COUNT field). Each country that is not ALL
+     * is represented as a part of the card and that country may get additional troops if the current player owns that country
+     * (only one country allowed per turn in of cards)
+     */
+    private void createDeck() {
+        Set<String> setCountryNames = board.countryNames();
+
+        List<String> countries = new ArrayList<>(setCountryNames);
+        for(String country: setCountryNames) {
+            countries.add(country);
+        }
+        List<Card> unshuffledCards = new ArrayList<Card>();
+        for(int i = 0; i < countries.size(); i++) {
+            unshuffledCards.add(new Card(Card.cardTypes()[i % Card.cardTypes().length],
+                                        countries.remove((int) (Math.random() * countries.size()))));
+        }
+        for (int i = 0; i < CARD_TYPE_ALL_COUNT; i++) {
+            unshuffledCards.add(new Card(Card.Type.ALL, null));
+        }
+        for(int i = 0; i < setCountryNames.size() + CARD_TYPE_ALL_COUNT; i++) {
+            deck.add(unshuffledCards.remove((int) (Math.random() * unshuffledCards.size())));
+        }
+
+
+    }
+
+    /**
+     * Determines if there is a country that will get additional troops if these cards were turned in on the current players .
+     * Assumes that the indexes are correct (the actual turn in cards method checks for errors)
+     * @param cardIndexes The desired indices of the cards of the current player to be turned in.
+     * @return The country that will get additional troops if there is one, otherwise return an empty string. (If the indices are not possible
+     * an empty string is returned)
+     */
+    public String extraCountryCardTurnIn(List<Integer> cardIndexes) {
+        if(turnInCardsErrorHandling(cardIndexes)) {
+            for(int i = 0; i < cardIndexes.size(); i++) {
+                Card currentCard = players[currentPlayerIndex].getCards().get(cardIndexes.get(i));
+                if (board.getOccupant(currentCard.getCountry()).equals(players[currentPlayerIndex])) {
+                    return currentCard.getCountry();
+                }
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Determines if there are cards that can be turned in, and if there is, returns the indexes of these cards. Assumes that
+     * you are looking for cards for the current given player, and does not check to make sure that you are in the right phase to
+     * turn in cards, but simply looks at the available cards in the deck
+     * @return Sample cards that can be turned in, or an empty list if it is not possible to turn in cards.
+     */
+    public List<Integer> turnInCards() {
+        Map<Card.Type, List<Integer>> cardTypeCount = new HashMap<>();
+        List<Card> cards = players[currentPlayerIndex].getCards();
+        for(int i = 0; i < cards.size(); i++) {
+            if(!cardTypeCount.containsKey(cards.get(i).getType())) {
+                List<Integer> indexList = new ArrayList<>();
+                indexList.add(i);
+                cardTypeCount.put(cards.get(i).getType(), indexList);
+            } else {
+                cardTypeCount.get(cards.get(i).getType()).add(i);
+            }
+        }
+        int allTypeCount = 0;
+
+        if(cardTypeCount.containsKey(Card.Type.ALL)) {
+            allTypeCount = cardTypeCount.get(Card.Type.ALL).size();
+        }
+
+        List<Integer> returnIndexList = new ArrayList<>();
+
+        //You have at least one set of cards that are all different, so grab one of each (using as little ALL cards as possible)
+        if(cardTypeCount.keySet().size() >= CARD_TURN_IN_SIZE || (cardTypeCount.keySet().size() + (allTypeCount - 1)) >= CARD_TURN_IN_SIZE) {
+            for(Card.Type type: cardTypeCount.keySet()) {
+                if (type != Card.Type.ALL) {
+                    returnIndexList.add(cardTypeCount.get(type).get(0));
+                }
+            }
+            int allIndex = 0;
+            while(returnIndexList.size() != CARD_TURN_IN_SIZE) {
+                returnIndexList.add(cardTypeCount.get(Card.Type.ALL).get(allIndex));
+                allIndex++;
+            }
+            return returnIndexList;
+        }
+        //Get three of a kind, not using all card if possible)
+        for(Card.Type type: cardTypeCount.keySet()) {
+            if(cardTypeCount.get(type).size() + allTypeCount >= CARD_TURN_IN_SIZE) {
+                returnIndexList = cardTypeCount.get(type).subList(0, Math.min(CARD_TURN_IN_SIZE, cardTypeCount.get(type).size()));
+            }
+            if(returnIndexList.size() != CARD_TURN_IN_SIZE) {
+                int allIndex = 0;
+                while (returnIndexList.size() != CARD_TURN_IN_SIZE && allTypeCount > allIndex) {
+                    returnIndexList.add(cardTypeCount.get(Card.Type.ALL).get(allIndex));
+                    allIndex++;
+                }
+            }
+            if(returnIndexList.size() == CARD_TURN_IN_SIZE) {
+                return returnIndexList;
+            }
+        }
+        return returnIndexList;
+    }
+
+    public int remainingDeck() {
+        return deck.size();
+    }
+    private Card getNextCard() {
+        if(deck.size() == 0) {
+            shuffleDeck();
+        }
+        return deck.remove();
+    }
+
+    /**
+     * Shuffles deck is the current deck is empty. Cards in the discard pile are randomly placed back into the deck.
+     * @return True if the shuffle was successful (there aren't any cards left in deck), false otherwise
+     */
+    private boolean shuffleDeck() {
+        if(deck.size() != 0) {
+            System.err.println("You should not shuffle for a new deck unless deck is empty");
+            return false;
+        }
+        int discardPileSize = discardPile.size();
+        for(int i = 0; i < discardPileSize; i++) {
+            deck.add(discardPile.remove((int) (Math.random() * discardPile.size())));
+        }
+        return true;
     }
 
     public List<RiskView> getRiskViews() {
@@ -176,8 +317,158 @@ public class Game {
             System.err.println("Current player: " + players[currentPlayerIndex]);
             System.err.println("Actual occupant: " + board.getOccupant(country));
             return false;
+        } else if(players[currentPlayerIndex].getCards().size() >= MAX_CARDS) {
+            System.err.println("ERROR: You must turn in cards before reinforcing");
+            return false;
         }
         return true;
+    }
+
+    /**
+     * Checks for errors when player wants to turn in certain cards. Checks for errors that
+     * can be checked for before looking at each card, but not errors that can only be determined
+     * after looking at each card
+     * @param turnInCards Indices representing the cards that player wants to turn in
+     * @return False if preconditions not met (specified in regular method)
+     * Returns true if all of the conditions are met.
+     *
+     */
+    private boolean turnInCardsErrorHandling(List<Integer> turnInCards) {
+        List<Card> playerCards = new ArrayList<>(players[currentPlayerIndex].getCards());
+        if (playerCards.size() < CARD_TURN_IN_SIZE) {
+            System.err.println("ERROR: You must have at least " + CARD_TURN_IN_SIZE + " cards to turn in");
+            System.err.println("Current number of cards " + players[currentPlayerIndex].getCards().size());
+            return false;
+        } else if(turnInCards.size() != CARD_TURN_IN_SIZE) {
+            System.err.println("ERROR: You must turn in the correct amount of cards");
+            System.err.println("Card number to turn in: " + CARD_TURN_IN_SIZE);
+            System.err.println("Cards attempted to turn in " + turnInCards.size());
+            return false;
+        } else if(currentPhase != Phase.ATTACK && currentPhase != Phase.DRAFT) {
+            System.err.println("ERROR: You can only turn in cards in draft or attack phase");
+            System.err.println("Current phase: " + currentPhase);
+            return false;
+        } else if(currentPhase == Phase.ATTACK && playerCards.size() < MAX_CARDS) {
+            System.err.println("ERROR: You can only turn in cards on attack phase if you have at least " + MAX_CARDS);
+            System.err.println("Current number cards: " + playerCards.size());
+            return false;
+        } else if(new HashSet<>(turnInCards).size() != CARD_TURN_IN_SIZE) {
+            System.err.println("ERROR: You can't turn in the same card twice");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns the cards that a player has
+     * in which case only the Type is returned
+     * @param player The given player to get the cards for
+     * @return A string representation of player's cards in the form of TYPE (COUNTRY) unless it is the ALL type
+     */
+    public List<String> getCards(String player) {
+        List<String> cardContents = new ArrayList<>();
+        List<Card> cards = getPlayer(player).getCards();
+        for(int i = 0; i < cards.size(); i++) {
+            cardContents.add(cards.get(i).toString());
+        }
+        return cardContents;
+    }
+
+    /**
+     * Turns in cards for the given player. Updates reinforcements and troops for corresponding country if successful
+     * as well as removing cards from players hand and placing in discard pile. Also updates whether the player continues
+     * to need to turn in cards.
+     * @param turnInCardsIndexes The suggested indicies of cards to be turned in for (assume current player is turning in cards)
+     * @return true if turning in cards is successful
+     * False if it is not by below conditions
+     * 1. Player doesn't have enough cards
+     * 2. Not right amount of cards that player is wanting to turn in for the given phase
+     * 3. Wrong phase for turning in cards
+     * 4. Indices are repeated for the desired turninCards
+     * 5. Cards can't be turned in (not all same or all different)
+     *
+     */
+    public boolean turnInCards(List<Integer> turnInCardsIndexes) {
+        boolean noErrorsTurnInCards = turnInCardsErrorHandling(turnInCardsIndexes);
+        if(!noErrorsTurnInCards) {
+            return false;
+        }
+        Set<Card.Type> typeSeen = new HashSet<>();
+        boolean allDifferent = true;
+        boolean allSame = false;
+        //Create a copy of the players cards
+        List<Card> playerCards = new ArrayList<>(players[currentPlayerIndex].getCards());
+        String firstCountryOccupied = null;
+        List<Card> turnInCards = new ArrayList<>();
+        int allTypeCardsSeen = 0;
+        for(int i: turnInCardsIndexes) {
+            if(i >= playerCards.size()) {
+                System.err.println("ERROR: Player does not have that many cards");
+                System.err.println("Desired card number: " + (i + 1));
+                System.err.println("Actual number cards: " + playerCards.size());
+                return false;
+            }
+            Card currentCard = playerCards.get(i);
+            turnInCards.add(currentCard);
+            if(firstCountryOccupied == null && board.getOccupant(currentCard.getCountry()).equals(players[currentPlayerIndex])) {
+                firstCountryOccupied = currentCard.getCountry();
+            }
+            if(currentCard.getType() != Card.Type.ALL && typeSeen.contains(currentCard.getType())) {
+                allDifferent = false;
+            }
+            if(currentCard.getType() == Card.Type.ALL) {
+                allTypeCardsSeen++;
+            }
+            typeSeen.add(currentCard.getType());
+        }
+        if((typeSeen.size() == 1 && !typeSeen.contains(Card.Type.ALL)) ||
+                (typeSeen.size() == 2 && typeSeen.contains(Card.Type.ALL) && !allDifferent)) {
+            allSame = true;
+        }
+        if(!(allDifferent || allSame)) {
+            System.err.println("ERROR: Cards must either all be the same or all be different");
+            System.err.println("Types seen: " + typeSeen);
+            return false;
+        }
+        if(turnInCardsTest) {
+            return true;
+        }
+        if(allDifferent) {
+            currentReinforceTroopsNumber += Card.getValue(Card.Type.ALL);
+        } else {
+            for(Card.Type type: typeSeen) {
+                if(type != Card.Type.ALL) {
+                    currentReinforceTroopsNumber += Card.getValue(type);
+                    break;
+                }
+            }
+        }
+        if(firstCountryOccupied != null) {
+            board.increaseTroops(firstCountryOccupied, BONUS_TROOPS_COUNTRY);
+        }
+        for(Card c: turnInCards) {
+            discardPile.add(c);
+            players[currentPlayerIndex].getCards().remove(c);
+        }
+        if(players[currentPlayerIndex].getCards().size() < MAX_CARDS && needTurnInCards) {
+            needTurnInCards = false;
+        }
+        if(usingRC) {
+            rC.update();
+        }
+        return true;
+    }
+
+    /**
+     * Determines whether you can turn in cards without actually turning them in
+     * @param indexes The indexes of the cards in the current players hand to turn in
+     * @return true if possible to turn in these cards, false otherwise
+     */
+    public boolean canTurnInCards(List<Integer> indexes) {
+        turnInCardsTest = true;
+        boolean canTurnInCards = turnInCards(indexes);
+        turnInCardsTest = false;
+        return canTurnInCards;
     }
 
     /**
@@ -286,10 +577,17 @@ public class Game {
 
       //Take over the country if there are no more troops
       if(board.getTroopCount(defendCountry) == 0) {
+          players[currentPlayerIndex].setAttackThisTurn();
           Player occupantDefeated = getOccupant(defendCountry);
           board.changeOccupant(defendCountry, players[currentPlayerIndex], 0);
           if(board.playerFinished(occupantDefeated)) {
               occupantDefeated.setOut();
+              for(Card card: occupantDefeated.getCards()) {
+                  players[currentPlayerIndex].addCard(card);
+              }
+              if(players[currentPlayerIndex].getCards().size() >= MAX_CARDS) {
+                  needTurnInCards = true;
+              }
           }
           if(isGameOver()) {
               currentPhase = Phase.ENDGAME;
@@ -349,6 +647,9 @@ public class Game {
             System.err.println("The number of troops must be at least " + minimumTroopsDefeatedCountry);
             System.err.println("The number of troops must be less than " + getTroopCount(currentVictorCountry));
             return false;
+        } else if(needTurnInCards) {
+            System.err.println("You still need to turn in cards since you have at least " + MAX_CARDS);
+            return false;
         }
         return true;
     }
@@ -359,12 +660,15 @@ public class Game {
     private boolean attackErrorHandling(String attackCountry, List<Integer> attackDice, String defendCountry,
                                         List<Integer> defendDice) {
         //Refer to error messages for explanation of if statement
-        if(currentPhase != Phase.ATTACK) {
+        if (currentPhase != Phase.ATTACK) {
             System.err.println("Phase is not correct. It should be attack phase but is actually " + currentPhase);
             return false;
         } else if (attackDice.size() < 1 || attackDice.size() > MAXIMUM_ATTACK || attackDice.size() >= getTroopCount(attackCountry)) {
             System.err.println("You can have 1-3 attack dice and the number of dice has to " +
                     "be less than the number of troops in the country");
+            return false;
+        } else if (getOccupant(attackCountry) != players[currentPlayerIndex]) {
+            System.err.println("You can only attack if it's your turn");
             return false;
         } else if (defendDice.size() != Math.min(getTroopCount(defendCountry), MAXIMUM_DEFENSE)) {
             System.err.println("Defender must defend with either one or two dice (one dice if defender only has one troop)");
@@ -378,6 +682,8 @@ public class Game {
         } else if (!board.containsCountry(attackCountry) || !board.containsCountry(defendCountry)) {
             System.err.println("Board must contain the countries that are attacking");
             return false;
+        } else if (needTurnInCards) {
+            System.err.println("You need to turn in cards before attacking since you have more than " + MAX_CARDS + " cards");
         }
         return true;
     }
@@ -462,6 +768,12 @@ public class Game {
         return true;
     }
 
+    private void addAttackCards() {
+        if(players[currentPlayerIndex].attackThisTurn()) {
+            players[currentPlayerIndex].addCard(getNextCard());
+        }
+    }
+
     /**
      * Fortify int troops from country "start" to country "end". Does not fortify if info provided is incorrect
      * @param countryFrom The country you're moving troops from
@@ -480,12 +792,14 @@ public class Game {
                 rC.update();
             }
         }
+        addAttackCards();
         return noErrorsFortify;
     }
 
     //Since a player can choose not to participate in the fortify phase, they may call this method to skip this phase.
     public void endFortifyPhase() {
         if(currentPhase == Phase.FORTIFY) {
+            addAttackCards();
             changePhase();
         }
     }

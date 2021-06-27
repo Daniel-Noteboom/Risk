@@ -17,6 +17,6 @@ public class RiskController {
     }
 
     public List<RiskView> getRiskViews() {
-        return new ArrayList<RiskView>(riskViews);
+        return new ArrayList<>(riskViews);
     }
 }

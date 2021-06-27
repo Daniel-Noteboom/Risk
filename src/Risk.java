@@ -17,7 +17,7 @@ public class Risk {
 //      System.out.println("You will be playing with " + numberPlayers + " players");
 //      int startingPlayer = (int) (Math.random() * numberPlayers);
       int startingPlayer = 0;
-      System.out.println("The starting player will be player" + (startingPlayer + 1));
+      System.out.println("The starting player will be player " + (startingPlayer + 1));
       String[] playerNames = new String[numberPlayers];
       for(int i = 0; i < playerNames.length; i++) {
          playerNames[i] = "" + (i + 1);
