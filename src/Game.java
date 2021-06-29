@@ -284,6 +284,14 @@ public class Game {
     public int getMinimumTroopsDefeatedCountry() {
         return minimumTroopsDefeatedCountry;
     }
+
+    public String getCurrentVictorCountry() {
+        return currentVictorCountry;
+    }
+
+    public String getCurrentDefeatedCountry() {
+        return currentDefeatedCountry;
+    }
     /** Returns and sets the number of troops that the current player can reinforce with
      * If the game phase is not correct 0 is returned **/
     private int setInitialReinforceTroopNumber() {
@@ -316,7 +324,7 @@ public class Game {
             System.err.println("Current player: " + players[currentPlayerIndex]);
             System.err.println("Actual occupant: " + board.getOccupant(country));
             return false;
-        } else if(players[currentPlayerIndex].getCards().size() >= MAX_CARDS) {
+        } else if(needTurnInCards) {
             System.err.println("ERROR: You must turn in cards before reinforcing");
             return false;
         }
@@ -356,6 +364,12 @@ public class Game {
             return false;
         }
         return true;
+    }
+
+    private void setNeedTurnInCards() {
+        if(players[currentPlayerIndex].getCards().size() >= MAX_CARDS) {
+            needTurnInCards = true;
+        }
     }
 
     /**
@@ -469,6 +483,10 @@ public class Game {
             rC.update();
         }
         return true;
+    }
+
+    public boolean needTurnInCards() {
+        return needTurnInCards;
     }
 
     /**
@@ -637,6 +655,8 @@ public class Game {
             board.increaseTroops(currentDefeatedCountry, troops);
             board.reduceTroops(currentVictorCountry, troops);
             minimumTroopsDefeatedCountry = 0;
+            currentVictorCountry = null;
+            currentDefeatedCountry = null;
             if(usingRC) {
                rC.update();
             }
@@ -827,6 +847,7 @@ public class Game {
         if(currentPhase == Phase.PREGAME) {
             currentPhase = Phase.DRAFT;
             setInitialReinforceTroopNumber();
+            setNeedTurnInCards();
         } else if(currentPhase == Phase.DRAFT) {
             currentPhase = Phase.ATTACK;
         } else if(currentPhase == Phase.ATTACK) {
@@ -905,6 +926,8 @@ public class Game {
         players[2].addCard(getNextCard());
         players[2].addCard(getNextCard());
         players[2].addCard(getNextCard());
+        players[0].addCard(getNextCard());
+        players[0].addCard(getNextCard());
         players[0].addCard(getNextCard());
         players[0].addCard(getNextCard());
         players[0].addCard(getNextCard());
