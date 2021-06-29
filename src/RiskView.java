@@ -13,6 +13,8 @@ public class RiskView extends JPanel {
     private static final int Y_OFFSET = 18;
     private static final int DIAMETER_CIRCLE = 25;
     private static final int OFFSET_LIST_PLAYERS_X = 30;
+    private static final int OFFSET_LIST_CARDS_X = 10;
+    private static final int OFFSET_LIST_CARDS_Y = 500;
     private static final int EXTRA_BOTTOM_SPACE = 100;
     private static final int OFFSET_INBETWEEN_TEXT = 14;
     private static final int OVAL_SPACING = 10;
@@ -75,7 +77,8 @@ public class RiskView extends JPanel {
             Point countryPoint = countryCoordinates.get(country);
             if(x >= countryPoint.getX() && x < countryPoint.getX() + DIAMETER_CIRCLE &&
                     y >= countryPoint.getY() && y < countryPoint.getY() + DIAMETER_CIRCLE) {
-                if(game.getCurrentPhase() == Game.Phase.DRAFT &&
+                if((game.getCurrentPhase() == Game.Phase.DRAFT ||
+                   (game.getCurrentPhase() == Game.Phase.ATTACK && game.getCurrentReinforcementTroopsNumber() > 0)) &&
                         game.getCurrentPlayerName().equals(game.getOccupantName(country))) {
                     handleDraftMouseClick(country);
                 } else if(game.getCurrentPhase() == Game.Phase.ATTACK) {
@@ -114,7 +117,9 @@ public class RiskView extends JPanel {
             button.addMouseListener(new MouseAdapter() {
                 public void mouseClicked(MouseEvent e) {
                     int selectedNumber = (int) comboBox.getSelectedItem();
-                    if (game.getCurrentPhase() == Game.Phase.DRAFT) {
+                    if (game.getCurrentPhase() == Game.Phase.DRAFT ||
+                            (game.getCurrentPhase() == Game.Phase.ATTACK &&
+                                    game.getCurrentReinforcementTroopsNumber() > 0)) {
                         game.reinforceTroops(selectedNumber, country);
                     } else if(game.getMinimumTroopsDefeatedCountry() != 0) {
                         game.setTroopsDefeatedCountry(selectedNumber);
@@ -133,8 +138,8 @@ public class RiskView extends JPanel {
     }
     private void handleDraftMouseClick(String country) {
         Integer[] possibleTroops = new Integer[game.getCurrentReinforcementTroopsNumber()];
-        for(int i = 0; i < possibleTroops.length; i++) {
-            possibleTroops[i] = i + 1;
+        for (int i = 0; i < possibleTroops.length; i++) {
+            possibleTroops[i] = possibleTroops.length - i;
         }
         optionBox(country, new JPanel(), possibleTroops, "Confirm");
     }
@@ -173,7 +178,7 @@ public class RiskView extends JPanel {
         int maxDice = game.getAttackDiceLimit(currentAttackCountry);
         Integer[] possibleDice = new Integer[maxDice];
         for(int i = 0; i < possibleDice.length; i++) {
-            possibleDice[i] = i + 1;
+            possibleDice[i] = possibleDice.length - i;
         }
         optionBox(currentAttackCountry, new JPanel(), possibleDice, "Attack");
     }
@@ -206,18 +211,19 @@ public class RiskView extends JPanel {
                 //2. Defender was defeated
                 } else {
                     attackPanel.removeAll();
+                    attackPanel.setName("Move troops");
                     int minTroops = game.getMinimumTroopsDefeatedCountry();
                     int maxTroops = game.getTroopCount(currentAttackCountry) - 1;
                     Integer[] possibleTroopsMove = new Integer[maxTroops - minTroops + 1];
                     for(int i = minTroops; i <= maxTroops; i++) {
-                        possibleTroopsMove[i - minTroops] = i;
+                        possibleTroopsMove[i - minTroops] = maxTroops + minTroops - i;
                     }
                     optionBox(currentAttackCountry, attackPanel, possibleTroopsMove, "Confirm Troops");
                 }
             //We need to make sure the dice is updated according to how many troops that the attacker has.
             } else if(game.getTroopCount(currentAttackCountry) <= attackDiceNumber.getItemCount()) {
                 for(int i = 0; i < attackDiceNumber.getItemCount() - game.getTroopCount(currentAttackCountry) + 1; i++) {
-                    attackDiceNumber.removeItemAt(attackDiceNumber.getItemCount() - i - 1);
+                    attackDiceNumber.removeItemAt(i);
                 }
             }
         }
@@ -239,7 +245,7 @@ public class RiskView extends JPanel {
                 repaint();
                 Integer[] possibleTroops = new Integer[game.getTroopCount(currentFortifyCountry) - 1];
                 for(int i = 0; i < possibleTroops.length; i++) {
-                    possibleTroops[i] = i + 1;
+                    possibleTroops[i] = possibleTroops.length - i;
                 }
                 optionBox(country, new JPanel(), possibleTroops, "Confirm");
             } else if (viableFortifyCountry(country)) {
@@ -273,12 +279,14 @@ public class RiskView extends JPanel {
                 (int) middleBottomInfoLocation().getY() - OFFSET_INBETWEEN_TEXT);
         endPhaseButton.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                if(game.getCurrentPhase() == Game.Phase.ATTACK) {
+                if(game.getCurrentPhase() == Game.Phase.ATTACK && game.getMinimumTroopsDefeatedCountry() == 0) {
                     game.endAttackPhase();
                 } else if(game.getCurrentPhase() == Game.Phase.FORTIFY) {
                     game.endFortifyPhase();
                 }
-                clearAndReset(endPhaseButton.getParent());
+                if(game.getMinimumTroopsDefeatedCountry() == 0) {
+                    clearAndReset(endPhaseButton.getParent());
+                }
             }
         });
         add(endPhaseButton);
@@ -336,7 +344,7 @@ public class RiskView extends JPanel {
     private void drawBottomBar(Graphics g) {
         int offsetFromTop = getHeight() - OFFSET_LIST_PLAYERS_Y;
         java.util.List<String> playerNamesInOrder = game.getPlayerOrder();
-        for(int i = 0; i < EXTRA_CIRCLE_THICKNESS; i++) {
+        for (int i = 0; i < EXTRA_CIRCLE_THICKNESS; i++) {
             String playerName = playerNamesInOrder.get(i);
             g.setColor(Color.BLACK);
             g.drawString("Player " + playerName, OFFSET_LIST_PLAYERS_X, offsetFromTop);
@@ -352,6 +360,45 @@ public class RiskView extends JPanel {
         offsetFromTop += OFFSET_INBETWEEN_TEXT;
         g.drawString("Current Player: " + game.getCurrentPlayerName(), getWidth() - OFFSET_INFO, offsetFromTop);
         g.setColor(playerColors.get(game.getCurrentPlayerName()));
+        offsetFromTop = OFFSET_LIST_CARDS_Y;
+        g.drawString("Current Cards: ", OFFSET_LIST_CARDS_X, offsetFromTop);
+        for (String card : game.getCards(game.getCurrentPlayerName())) {
+            offsetFromTop += OFFSET_INBETWEEN_TEXT;
+            String[] cardSplit = card.split("\\(");
+            String country = "";
+            String cardText = card;
+
+            if(cardSplit.length != 1) {
+                country = cardSplit[1];
+                country = country.substring(0, country.length() - 1);
+                if(game.getOccupantName(country).equals(game.getCurrentPlayerName())) {
+                    cardText += "(+2)";
+                }
+            }
+            g.drawString(cardText, OFFSET_LIST_CARDS_X, offsetFromTop);
+        }
+        if (game.canTurnInCards(game.turnInCards())) {
+            turnInCardsButton(offsetFromTop + OFFSET_INBETWEEN_TEXT);
+        }
+    }
+
+    private void turnInCardsButton(int offsetFromTop) {
+        JButton turnInCardsButton = new JButton("Turn in Cards");
+        turnInCardsButton.setVisible(true);
+        turnInCardsButton.setSize(turnInCardsButton.getPreferredSize());
+        turnInCardsButton.setLocation(OFFSET_LIST_CARDS_X, offsetFromTop);
+        turnInCardsButton.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                game.turnInCards(game.turnInCards());
+                if(game.getMinimumTroopsDefeatedCountry() == 0) {
+                    clearAndReset(turnInCardsButton.getParent());
+                } else {
+                    turnInCardsButton.getParent().repaint();
+                }
+            }
+        });
+        add(turnInCardsButton);
+        revalidate();
     }
 
     private void clearAndReset(Container container) {

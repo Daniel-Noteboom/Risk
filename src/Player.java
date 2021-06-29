@@ -32,7 +32,7 @@ public class Player {
       this.attackThisTurn = true;
    }
 
-   public void unSetAttackThisTurn() {
+   public void unsetAttackThisTurn() {
       this.attackThisTurn = false;
    }
 

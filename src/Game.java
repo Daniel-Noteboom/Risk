@@ -103,11 +103,10 @@ public class Game {
         Set<String> setCountryNames = board.countryNames();
 
         List<String> countries = new ArrayList<>(setCountryNames);
-        for(String country: setCountryNames) {
-            countries.add(country);
-        }
+
         List<Card> unshuffledCards = new ArrayList<Card>();
-        for(int i = 0; i < countries.size(); i++) {
+        int countriesSize = countries.size();
+        for(int i = 0; i < countriesSize; i++) {
             unshuffledCards.add(new Card(Card.cardTypes()[i % Card.cardTypes().length],
                                         countries.remove((int) (Math.random() * countries.size()))));
         }
@@ -117,7 +116,7 @@ public class Game {
         for(int i = 0; i < setCountryNames.size() + CARD_TYPE_ALL_COUNT; i++) {
             deck.add(unshuffledCards.remove((int) (Math.random() * unshuffledCards.size())));
         }
-
+        int i = 0;
 
     }
 
@@ -303,7 +302,7 @@ public class Game {
 
     //Helper method that handles errors for reinforceTroops (refer to that method for what errors it flags)
     private boolean reinforceTroopsErrorHandling(int troops, String country) {
-        if(!(currentPhase == Phase.DRAFT)) {
+        if(!(currentPhase == Phase.DRAFT || (currentPhase == Phase.ATTACK && currentReinforceTroopsNumber > 0))) {
             System.err.println("ERROR: Current phase: " + currentPhase);
             System.err.println("Expected phase: " + Phase.DRAFT);
             return false;
@@ -389,8 +388,14 @@ public class Game {
      *
      */
     public boolean turnInCards(List<Integer> turnInCardsIndexes) {
+        if(turnInCardsTest) {
+            System.out.println("Testing cards started");
+        }
         boolean noErrorsTurnInCards = turnInCardsErrorHandling(turnInCardsIndexes);
         if(!noErrorsTurnInCards) {
+            if(turnInCardsTest) {
+                System.out.println("Testing cards finished");
+            }
             return false;
         }
         Set<Card.Type> typeSeen = new HashSet<>();
@@ -406,6 +411,9 @@ public class Game {
                 System.err.println("ERROR: Player does not have that many cards");
                 System.err.println("Desired card number: " + (i + 1));
                 System.err.println("Actual number cards: " + playerCards.size());
+                if(turnInCardsTest) {
+                    System.out.println("Testing cards finished");
+                }
                 return false;
             }
             Card currentCard = playerCards.get(i);
@@ -428,9 +436,13 @@ public class Game {
         if(!(allDifferent || allSame)) {
             System.err.println("ERROR: Cards must either all be the same or all be different");
             System.err.println("Types seen: " + typeSeen);
+            if(turnInCardsTest) {
+                System.out.println("Testing cards finished");
+            }
             return false;
         }
         if(turnInCardsTest) {
+            System.out.println("Testing cards finished");
             return true;
         }
         if(allDifferent) {
@@ -485,7 +497,7 @@ public class Game {
         if(noErrorsReinforce) {
             board.increaseTroops(country, troops);
             currentReinforceTroopsNumber -= troops;
-            if (currentReinforceTroopsNumber == 0) {
+            if (currentReinforceTroopsNumber == 0 && currentPhase == Phase.DRAFT) {
                 changePhase();
             }
             if(usingRC) {
@@ -650,6 +662,10 @@ public class Game {
         } else if(needTurnInCards) {
             System.err.println("You still need to turn in cards since you have at least " + MAX_CARDS);
             return false;
+        } else if (currentReinforceTroopsNumber > 0) {
+            System.err.println("You still need to reinforce since you have " + currentReinforceTroopsNumber +
+                    " troops");
+            return false;
         }
         return true;
     }
@@ -787,12 +803,12 @@ public class Game {
         if(noErrorsFortify) {
             board.reduceTroops(countryFrom, troops);
             board.increaseTroops(countryTo, troops);
+            addAttackCards();
             changePhase();
             if(usingRC) {
                 rC.update();
             }
         }
-        addAttackCards();
         return noErrorsFortify;
     }
 
@@ -800,6 +816,7 @@ public class Game {
     public void endFortifyPhase() {
         if(currentPhase == Phase.FORTIFY) {
             addAttackCards();
+            players[currentPlayerIndex].unsetAttackThisTurn();
             changePhase();
         }
     }
@@ -858,6 +875,10 @@ public class Game {
         int countriesOccupied = 0;
         //Randomly populate the countries with one troop each, starting with the first player
         while (!(countriesOccupied == board.numberCountries())) {
+            //DELETE LATER
+            if(currentPlayerIndex == 2 && numberTroopsAdd != STARTING_TROOPS[players.length - MINIMUM_PLAYERS]) {
+                nextPlayer();
+            }
 
             Country currentCountry = board.randomUnoccupiedCountry(countriesOccupied);
             currentCountry.changeOccupant(players[currentPlayerIndex], 1);
@@ -866,7 +887,6 @@ public class Game {
             if(isFullTurnCycle()) {
                 numberTroopsAdd--;
             }
-
             nextPlayer();
 
 
@@ -879,6 +899,17 @@ public class Game {
             nextPlayer();
 
         }
+        //DELETE
+        board.reduceTroops(board.randomCountry(players[2]), 34);
+        players[2].addCard(getNextCard());
+        players[2].addCard(getNextCard());
+        players[2].addCard(getNextCard());
+        players[2].addCard(getNextCard());
+        players[0].addCard(getNextCard());
+        players[0].addCard(getNextCard());
+        players[0].addCard(getNextCard());
+
+
         if(currentPhase != Phase.DRAFT) {
             changePhase();
         }
