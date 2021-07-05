@@ -29,6 +29,7 @@ public class RiskView extends JPanel {
     private static final Color DEFEND_COLOR = Color.decode("#800000"); //Dark Red
     private static final Color FORTIFY_COLOR = Color.BLACK;
     private static final Color FORTIFIED_COLOR = Color.YELLOW;
+    private boolean showTurnInCards = false;
     private String currentAttackCountry;
     private String currentDefendCountry;
     private String currentFortifyCountry;
@@ -398,8 +399,8 @@ public class RiskView extends JPanel {
     private void drawCardsInfo(Graphics g) {
         g.setColor(playerColors.get(game.getCurrentPlayerName()));
         int offsetFromTop = OFFSET_LIST_CARDS_Y;
-        boolean canTurnInCards = game.canTurnInCards(game.turnInCards());
-        if(!canTurnInCards) {
+        boolean needTurnInCards = game.needTurnInCards();
+        if(!needTurnInCards && !showTurnInCards) {
             g.drawString("Current Cards: ", OFFSET_LIST_CARDS_X, offsetFromTop);
         }
         java.util.List<Integer> turnInCards = game.turnInCards();
@@ -438,71 +439,87 @@ public class RiskView extends JPanel {
                 g.setColor(Color.BLACK);
             }
             cardText += bonusString;
-            if(!canTurnInCards) {
+            if(!needTurnInCards && !showTurnInCards) {
                 g.drawString(cardText, OFFSET_LIST_CARDS_X, offsetFromTop);
             }
 
         }
-        if (canTurnInCards) {
-            JPanel panel = new JPanel(new BorderLayout(0, OFFSET_INBETWEEN_TEXT));
-            JPanel turnInCardsPanel = new JPanel(new BorderLayout(0, OFFSET_INBETWEEN_TEXT / 4));
-            JPanel notTurnInCardsPanel = new JPanel(new BorderLayout(0, OFFSET_INBETWEEN_TEXT / 4));
-            DefaultComboBoxModel<String> turnInCardsModel = new DefaultComboBoxModel<>(turnInCardsTyped);
-            DefaultComboBoxModel<String> notTurnInCardsModel = new DefaultComboBoxModel<>(notTurnInCardsTyped);
-            JList turnInCardsList = new JList(turnInCardsModel);
-            JList notTurnInCardsList = new JList(notTurnInCardsModel);
-            turnInCardsList.addMouseListener(new MouseAdapter() {
-                public void mouseClicked(MouseEvent e) {
-                    String removedCard = (String) turnInCardsList.getSelectedValue();
-                    turnInCardsModel.removeElement(removedCard);
-                    notTurnInCardsModel.addElement(removedCard);
-                }
-            });
-            notTurnInCardsList.addMouseListener(new MouseAdapter() {
-                public void mouseClicked(MouseEvent e) {
-                    String addedCard = (String) notTurnInCardsList.getSelectedValue();
-                    notTurnInCardsModel.removeElement(addedCard);
-                    turnInCardsModel.addElement(addedCard);
-                }
-            });
-            turnInCardsPanel.add(turnInCardsList, BorderLayout.NORTH);
-            JLabel turnInCardsLabel = new JLabel("Turn In Cards");
-            turnInCardsPanel.add(turnInCardsLabel, BorderLayout.SOUTH);
-            notTurnInCardsPanel.add(notTurnInCardsList, BorderLayout.NORTH);
-            notTurnInCardsPanel.add(new JLabel("Not Turning In Cards"));
-            panel.add(turnInCardsPanel, BorderLayout.NORTH);
-            panel.add(notTurnInCardsPanel, BorderLayout.SOUTH);
-            panel.setLocation(OFFSET_LIST_CARDS_X, OFFSET_LIST_CARDS_Y + OFFSET_INBETWEEN_TEXT * 3);
-            panel.setVisible(true);
-            panel.setSize(panel.getPreferredSize());
-            add(panel);
-            turnInCardsButton(OFFSET_LIST_CARDS_Y, turnInCardsModel, turnInCardsLabel);
-
+        if (needTurnInCards || showTurnInCards) {
+            chooseTurnInCards(turnInCardsTyped, notTurnInCardsTyped);
+        } else if (game.canTurnInCards(game.turnInCards())) {
+            turnInCardsButton(offsetFromTop + OFFSET_INBETWEEN_TEXT, new DefaultComboBoxModel<>());
         }
     }
 
-    private void turnInCardsButton(int offsetFromTop, DefaultComboBoxModel<String> turnInCardsModel,
-                                   JLabel turnInCardsLabel) {
+    private void chooseTurnInCards(String[] turnInCardsTyped, String[] notTurnInCardsTyped) {
+        JPanel panel = new JPanel(new BorderLayout(0, OFFSET_INBETWEEN_TEXT));
+        JPanel turnInCardsPanel = new JPanel(new BorderLayout(0, OFFSET_INBETWEEN_TEXT / 4));
+        JPanel notTurnInCardsPanel = new JPanel(new BorderLayout(0, OFFSET_INBETWEEN_TEXT / 4));
+        DefaultComboBoxModel<String> turnInCardsModel = new DefaultComboBoxModel<>(turnInCardsTyped);
+        DefaultComboBoxModel<String> notTurnInCardsModel = new DefaultComboBoxModel<>(notTurnInCardsTyped);
+        JList turnInCardsList = new JList(turnInCardsModel);
+        JList notTurnInCardsList = new JList(notTurnInCardsModel);
+        turnInCardsList.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                String removedCard = (String) turnInCardsList.getSelectedValue();
+                turnInCardsModel.removeElement(removedCard);
+                notTurnInCardsModel.addElement(removedCard);
+            }
+        });
+        notTurnInCardsList.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                String addedCard = (String) notTurnInCardsList.getSelectedValue();
+                notTurnInCardsModel.removeElement(addedCard);
+                turnInCardsModel.addElement(addedCard);
+            }
+        });
+        turnInCardsPanel.add(turnInCardsList, BorderLayout.NORTH);
+        JLabel turnInCardsLabel = new JLabel("Turn In Cards");
+        turnInCardsPanel.add(turnInCardsLabel, BorderLayout.SOUTH);
+        notTurnInCardsPanel.add(notTurnInCardsList, BorderLayout.NORTH);
+        notTurnInCardsPanel.add(new JLabel("Not Turning In Cards"));
+        panel.add(turnInCardsPanel, BorderLayout.NORTH);
+        panel.add(notTurnInCardsPanel, BorderLayout.SOUTH);
+        panel.setLocation(OFFSET_LIST_CARDS_X, OFFSET_LIST_CARDS_Y + OFFSET_INBETWEEN_TEXT * 3);
+        panel.setVisible(true);
+        panel.setSize(panel.getPreferredSize());
+        add(panel);
+        turnInCardsButton(OFFSET_LIST_CARDS_Y, turnInCardsModel);
+    }
+
+    private void turnInCardsButton(int offsetFromTop, DefaultComboBoxModel<String> turnInCardsModel) {
         JButton turnInCardsButton = new JButton("Turn in Cards");
         turnInCardsButton.setVisible(true);
         turnInCardsButton.setSize(turnInCardsButton.getPreferredSize());
         turnInCardsButton.setLocation(OFFSET_LIST_CARDS_X, offsetFromTop);
-        turnInCardsButton.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                java.util.List<String> turnInCards = new ArrayList<>();
-                for(int i = 0; i < turnInCardsModel.getSize(); i++) {
-                    turnInCards.add(turnInCardsModel.getElementAt(i).split(BONUS_TROOPS_SYMBOL_REGEX)[0].trim());
+        if(game.needTurnInCards() || showTurnInCards) {
+            turnInCardsButton.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent e) {
+                    java.util.List<String> turnInCards = new ArrayList<>();
+                    for (int i = 0; i < turnInCardsModel.getSize(); i++) {
+                        turnInCards.add(turnInCardsModel.getElementAt(i).split(BONUS_TROOPS_SYMBOL_REGEX)[0].trim());
+                    }
+                    Map<String, Integer> cardsToIndexes = game.getCardsToIndexes(game.getCurrentPlayerName());
+                    java.util.List<Integer> indexes = new ArrayList<Integer>();
+                    for (String card : turnInCards) {
+                        indexes.add(cardsToIndexes.get(card));
+                    }
+                    if (game.turnInCards(indexes)) {
+                        showTurnInCards = false;
+                        clearAndReset(turnInCardsButton.getParent());
+                    }
                 }
-                Map<String, Integer> cardsToIndexes = game.getCardsToIndexes(game.getCurrentPlayerName());
-                java.util.List<Integer> indexes = new ArrayList<Integer>();
-                for(String card: turnInCards) {
-                    indexes.add(cardsToIndexes.get(card));
-                }
-                if(game.turnInCards(indexes)) {
-                    clearAndReset(turnInCardsButton.getParent());
-                }
-            }
-        });
+            });
+        } else {
+            turnInCardsButton.addMouseListener(new MouseAdapter() {
+               public void mouseClicked(MouseEvent e) {
+                   if(game.canTurnInCards(game.turnInCards())) {
+                       showTurnInCards = true;
+                       clearAndReset(turnInCardsButton.getParent());
+                   }
+               }
+           });
+        }
         add(turnInCardsButton);
         revalidate();
     }
