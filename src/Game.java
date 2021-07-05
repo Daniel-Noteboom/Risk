@@ -195,7 +195,7 @@ public class Game {
                 return returnIndexList;
             }
         }
-        return returnIndexList;
+        return new ArrayList<>();
     }
 
     public int remainingDeck() {
@@ -387,6 +387,15 @@ public class Game {
         return cardContents;
     }
 
+    public Map<String, Integer> getCardsToIndexes(String player) {
+        Map<String, Integer> cardsToIndexes = new HashMap<>();
+        List<Card> cards = getPlayer(player).getCards();
+        for(int i = 0; i < cards.size(); i++) {
+            cardsToIndexes.put(cards.get(i).toString(), i);
+        }
+        return cardsToIndexes;
+    }
+
     /**
      * Turns in cards for the given player. Updates reinforcements and troops for corresponding country if successful
      * as well as removing cards from players hand and placing in discard pile. Also updates whether the player continues
@@ -555,6 +564,7 @@ public class Game {
 
         if(phase == Phase.DRAFT) {
             setInitialReinforceTroopNumber();
+            setNeedTurnInCards();
         } else {
             currentReinforceTroopsNumber = 0;
         }
@@ -859,6 +869,7 @@ public class Game {
             currentPhase = Phase.DRAFT;
             nextPlayer();
             setInitialReinforceTroopNumber();
+            setNeedTurnInCards();
         }
     }
 
@@ -926,7 +937,6 @@ public class Game {
         players[2].addCard(getNextCard());
         players[2].addCard(getNextCard());
         players[2].addCard(getNextCard());
-        players[0].addCard(getNextCard());
         players[0].addCard(getNextCard());
         players[0].addCard(getNextCard());
         players[0].addCard(getNextCard());

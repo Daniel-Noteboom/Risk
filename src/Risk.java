@@ -141,13 +141,16 @@ public class Risk {
       if(useView) {
          RiskController rC = new RiskController();
          g = new Game(b, players, startingPlayer, false, rC);
+         if (randomlyPopulate) {
+            g.randomlyPopulateBoard();
+         }
          RiskView rV = new RiskView(picFile, countryCoordinates, playerColors, g);
          rC.addRiskView(rV);
       } else {
          g = new Game(b, players, startingPlayer);
-      }
-      if (randomlyPopulate) {
-         g.randomlyPopulateBoard();
+         if (randomlyPopulate) {
+            g.randomlyPopulateBoard();
+         }
       }
       return g;
    }
