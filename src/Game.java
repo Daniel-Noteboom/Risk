@@ -907,10 +907,6 @@ public class Game {
         int countriesOccupied = 0;
         //Randomly populate the countries with one troop each, starting with the first player
         while (!(countriesOccupied == board.numberCountries())) {
-            //DELETE LATER
-            if(currentPlayerIndex == 2 && numberTroopsAdd != STARTING_TROOPS[players.length - MINIMUM_PLAYERS]) {
-                nextPlayer();
-            }
 
             Country currentCountry = board.randomUnoccupiedCountry(countriesOccupied);
             currentCountry.changeOccupant(players[currentPlayerIndex], 1);
@@ -931,16 +927,6 @@ public class Game {
             nextPlayer();
 
         }
-        //DELETE
-        board.reduceTroops(board.randomCountry(players[2]), 34);
-        players[2].addCard(getNextCard());
-        players[2].addCard(getNextCard());
-        players[2].addCard(getNextCard());
-        players[2].addCard(getNextCard());
-        players[0].addCard(getNextCard());
-        players[0].addCard(getNextCard());
-        players[0].addCard(getNextCard());
-        players[0].addCard(getNextCard());
 
 
         if(currentPhase != Phase.DRAFT) {
