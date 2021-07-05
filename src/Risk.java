@@ -5,55 +5,48 @@ import java.util.*;
 import java.io.*;
 import java.awt.*;
 public class Risk {
-   private static final Color[] possiblePlayerColors = {Color.BLACK, Color.GRAY, Color.BLUE, Color.MAGENTA, Color.RED, Color.YELLOW};
+   private static final Integer[] NUMBER_PLAYERS = {3,4,5,6};
+   private static final Color[] POSSIBLE_PLAYER_COLORS = {Color.BLACK, Color.GRAY, Color.BLUE,
+           Color.decode("#800080") /*purple*/, Color.decode("#800000") /*Maroon*/, Color.decode("#00A36C") /*Green*/};
    public static void main(String[] args) {
-//      System.out.println("How many players do you want to play with? Please " +
-//      "type in a number from three to six in numerical form (3,4,5,6)");
-//      int numberPlayers = Risk.getNumberPlayers();
-//      while (numberPlayers == 0) {
-//         numberPlayers = Risk.getNumberPlayers();
-//      }
-      int numberPlayers = 3; //For testing only
-//      System.out.println("You will be playing with " + numberPlayers + " players");
-//      int startingPlayer = (int) (Math.random() * numberPlayers);
-      int startingPlayer = 0;
-      System.out.println("The starting player will be player " + (startingPlayer + 1));
-      String[] playerNames = new String[numberPlayers];
-      for(int i = 0; i < playerNames.length; i++) {
-         playerNames[i] = "" + (i + 1);
-      }
-      Game game = createGame(playerNames, startingPlayer, "risk_data.txt", true, true);
       JFrame f = new JFrame("Risk Game");
-      RiskView mainView = game.getRiskViews().get(0);
-      mainView.addMouseListener(new MouseAdapter() {
+      JPanel panel = new JPanel(new BorderLayout(5, 10));
+      JLabel label = new JLabel("Risk", SwingConstants.CENTER);
+      label.setFont(new Font(label.getFont().getName(), Font.PLAIN, 20));
+      panel.add(label, BorderLayout.NORTH);
+
+      JComboBox<Integer> playerNumbers = new JComboBox<>(NUMBER_PLAYERS);
+      panel.add(playerNumbers, BorderLayout.CENTER);
+      JButton button = new JButton("Start Game");
+      button.addMouseListener(new MouseAdapter() {
          public void mouseClicked(MouseEvent e) {
-            mainView.mouseClicked(e.getX(), e.getY());
+            f.remove(panel);
+            String[] playerNames = new String[(int) playerNumbers.getSelectedItem()];
+            for(int i = 0; i < playerNames.length; i++) {
+               playerNames[i] = "" + (i + 1);
+            }
+            Game game = createGame(playerNames, (int) (Math.random() * playerNames.length),
+                    "risk_data.txt", true, true);
+            RiskView mainView = game.getRiskViews().get(0);
+            mainView.addMouseListener(new MouseAdapter() {
+               public void mouseClicked(MouseEvent e) {
+                  mainView.mouseClicked(e.getX(), e.getY());
+               }
+            });
+            f.add(mainView);
+            f.setSize(mainView.getWidth(), mainView.getHeight() +
+                    mainView.getExtraBottomSpace());
+            f.setLocationRelativeTo(null);
          }
       });
+      panel.add(button, BorderLayout.SOUTH);
+      panel.add(new JLabel("Choose Player Number"), BorderLayout.WEST);
+      panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
       f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      f.add(mainView);
-      f.setSize(mainView.getWidth(), mainView.getHeight() +
-              mainView.getExtraBottomSpace());
+      f.add(panel);
       f.setLocationRelativeTo(null);
+      f.setSize(230, 230);
       f.setVisible(true);
-   }
-   /* Get the number of players for the risk game. If the player 
-   does not give a number they will be prompted to give a number.
-   If they give a number that is not in the range of 3-6 then 0
-   is returned */
-   private static int getNumberPlayers() {
-      Scanner scanner = new Scanner(System.in);
-      while (!scanner.hasNextInt()) {
-         scanner.next();
-         System.out.println("Please type in a number from three to six");
-      }
-      int numberPlayers = scanner.nextInt();
-      if (numberPlayers < 3 || numberPlayers > 6) {
-         System.out.println("Please type in a number from three to six");
-         return 0;
-      } else {
-         return numberPlayers;
-      }
    }
    
    public static Game createGame(String[] playerNames, int startingPlayer, String fileName, boolean useView, boolean randomlyPopulate) {
@@ -135,7 +128,7 @@ public class Risk {
       }
       Map<String, Color> playerColors = new HashMap<>();
       for(int i = 0; i < playerNames.length; i++) {
-         playerColors.put(playerNames[i], possiblePlayerColors[i]);
+         playerColors.put(playerNames[i], POSSIBLE_PLAYER_COLORS[i]);
       }
       Game g;
       if(useView) {

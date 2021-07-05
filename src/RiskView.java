@@ -18,11 +18,10 @@ public class RiskView extends JPanel {
     private static final int EXTRA_BOTTOM_SPACE = 100;
     private static final int OFFSET_INBETWEEN_TEXT = 14;
     private static final int OVAL_SPACING = 10;
-    private static final int OFFSET_LIST_PLAYERS_Y = EXTRA_BOTTOM_SPACE;
+    private static final int OFFSET_LIST_PLAYERS_Y = EXTRA_BOTTOM_SPACE + (OFFSET_INBETWEEN_TEXT * 3 / 2);
     private static final int OFFSET_INFO = 200;
     private static final int INFO_OFFSET_FROM_MIDDLE = 100;
     private static final int EXTRA_CIRCLE_SIZE = 10;
-    private static final int EXTRA_CIRCLE_THICKNESS = 3;
     private static final int OFFSET_TURN_CARDS_IN = 230;
     private static final String BONUS_TROOPS_SYMBOL_REGEX = "\\+";
     private static final Color ATTACK_COLOR = Color.decode("#008000"); //Dark Green
@@ -310,7 +309,7 @@ public class RiskView extends JPanel {
         endPhaseButton.setVisible(true);
         endPhaseButton.setSize(endPhaseButton.getPreferredSize());
         endPhaseButton.setLocation(getWidth() / 2,
-                (int) middleBottomInfoLocation().getY() - OFFSET_INBETWEEN_TEXT);
+                (int) middleBottomInfoLocation().getY() - (OFFSET_INBETWEEN_TEXT * 3 / 2));
         endPhaseButton.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if(game.getCurrentPhase() == Game.Phase.ATTACK && game.getMinimumTroopsDefeatedCountry() == 0) {
@@ -378,7 +377,7 @@ public class RiskView extends JPanel {
     private void drawBottomBar(Graphics g) {
         int offsetFromTop = getHeight() - OFFSET_LIST_PLAYERS_Y;
         java.util.List<String> playerNamesInOrder = game.getPlayerOrder();
-        for (int i = 0; i < EXTRA_CIRCLE_THICKNESS; i++) {
+        for (int i = 0; i < playerNamesInOrder.size(); i++) {
             String playerName = playerNamesInOrder.get(i);
             g.setColor(Color.BLACK);
             g.drawString("Player " + playerName, OFFSET_LIST_PLAYERS_X, offsetFromTop);
@@ -452,7 +451,7 @@ public class RiskView extends JPanel {
     }
 
     private void chooseTurnInCards(String[] turnInCardsTyped, String[] notTurnInCardsTyped) {
-        JPanel panel = new JPanel(new BorderLayout(0, OFFSET_INBETWEEN_TEXT));
+        JPanel panel = new JPanel(new BorderLayout(0, OFFSET_INBETWEEN_TEXT / 2 ));
         JPanel turnInCardsPanel = new JPanel(new BorderLayout(0, OFFSET_INBETWEEN_TEXT / 4));
         JPanel notTurnInCardsPanel = new JPanel(new BorderLayout(0, OFFSET_INBETWEEN_TEXT / 4));
         DefaultComboBoxModel<String> turnInCardsModel = new DefaultComboBoxModel<>(turnInCardsTyped);
@@ -480,7 +479,7 @@ public class RiskView extends JPanel {
         notTurnInCardsPanel.add(new JLabel("Not Turning In Cards"));
         panel.add(turnInCardsPanel, BorderLayout.NORTH);
         panel.add(notTurnInCardsPanel, BorderLayout.SOUTH);
-        panel.setLocation(OFFSET_LIST_CARDS_X, OFFSET_LIST_CARDS_Y + OFFSET_INBETWEEN_TEXT * 3);
+        panel.setLocation(OFFSET_LIST_CARDS_X, OFFSET_LIST_CARDS_Y + OFFSET_INBETWEEN_TEXT * 2);
         panel.setVisible(true);
         panel.setSize(panel.getPreferredSize());
         add(panel);
