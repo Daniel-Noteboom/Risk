@@ -23,6 +23,8 @@ public class RiskView extends JPanel {
     private static final int INFO_OFFSET_FROM_MIDDLE = 100;
     private static final int EXTRA_CIRCLE_SIZE = 10;
     private static final int OFFSET_TURN_CARDS_IN = 230;
+
+    private static final int COUNTRY_PANEL_OFFSET = DIAMETER_CIRCLE + 4;
     private static final String BONUS_TROOPS_SYMBOL_REGEX = "\\+";
     private static final Color ATTACK_COLOR = Color.decode("#008000"); //Dark Green
     private static final Color DEFEND_COLOR = Color.decode("#800000"); //Dark Red
@@ -33,6 +35,13 @@ public class RiskView extends JPanel {
     private String currentDefendCountry;
     private String currentFortifyCountry;
     private String currentFortifiedCountry;
+
+    enum Direction {
+        NORTH,
+        SOUTH,
+        WEST,
+        NORTHWEST
+    }
     public RiskView(String fileName, Map<String, Point> countryCoordinates, Map<String, Color> playerColors,
                            Game game) {
         this.countryCoordinates = countryCoordinates;
@@ -121,12 +130,12 @@ public class RiskView extends JPanel {
     //in a function in java there is an if statement for the time the box is used, but
     //all the other code is resusable
     private void optionBox(String country, JPanel panel, Integer[] options, String buttonText) {
-        panel.setLocation(panelLocation(countryCoordinates.get(country)));
         panel.setLayout(new BorderLayout());
         JComboBox<Integer> comboBox = new JComboBox<>(options);
         panel.add(comboBox, BorderLayout.NORTH);
         JButton button = new JButton(buttonText);
         panel.add(button, BorderLayout.SOUTH);
+        panel.setLocation(panelLocation(countryCoordinates.get(country), panel.getPreferredSize()));
         if(game.getCurrentPhase() == Game.Phase.ATTACK && game.getMinimumTroopsDefeatedCountry() == 0) {
             button.addMouseListener(new AttackClicked(comboBox, panel));
         } else {
@@ -293,8 +302,42 @@ public class RiskView extends JPanel {
         }
     }
 
-    public Point panelLocation(Point countryPoint) {
-        return new Point((int) countryPoint.getX(),(int) countryPoint.getY() + (DIAMETER_CIRCLE * 3 / 2));
+    public Point panelLocation(Point countryPoint, Dimension d) {
+        double countryX = countryPoint.getX();
+        double countryY = countryPoint.getY();
+        Direction direction = Direction.SOUTH;
+        if(countryPoint.getX() > this.getWidth() - d.getWidth()) {
+            direction = Direction.WEST;
+        }
+        if(game.getCurrentReinforcementTroopsNumber() == 0) {
+            double yDiff = 0;
+            double xDiff = 0;
+            if(currentDefendCountry != null) {
+                yDiff  = countryCoordinates.get(currentDefendCountry).getY() - countryY;
+                xDiff = countryCoordinates.get(currentDefendCountry).getX() - countryX;
+            } else {
+                yDiff  = countryCoordinates.get(currentFortifyCountry).getY() - countryY;
+                xDiff = countryCoordinates.get(currentFortifyCountry).getX() - countryX;
+            }
+            if((yDiff > 0 && yDiff < d.getHeight() + COUNTRY_PANEL_OFFSET) &&
+                    (xDiff > -DIAMETER_CIRCLE && xDiff < d.getWidth())) {
+                if(direction == Direction.WEST) {
+                    direction = Direction.NORTHWEST;
+                } else {
+                    direction = Direction.NORTH;
+                }
+            }
+        }
+        if(direction == Direction.SOUTH || direction == Direction.WEST) {
+            countryY += COUNTRY_PANEL_OFFSET;
+        } else if(direction == Direction.NORTH || direction == Direction.NORTHWEST) {
+            countryY -= d.getHeight() + COUNTRY_PANEL_OFFSET - DIAMETER_CIRCLE;
+        }
+
+        if(direction == Direction.WEST || direction == Direction.NORTHWEST) {
+            countryX = countryX - d.getWidth() + DIAMETER_CIRCLE;
+        }
+        return new Point((int) countryX,(int) countryY);
     }
 
     private Point middleBottomInfoLocation() {
