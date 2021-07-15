@@ -6,8 +6,6 @@ import java.io.*;
 import java.awt.*;
 public class Risk {
    public static final Integer[] NUMBER_PLAYERS = {3,4,5,6};
-   private static final Color[] POSSIBLE_PLAYER_COLORS = {Color.BLACK, Color.GRAY, Color.BLUE,
-           Color.decode("#800080") /*purple*/, Color.decode("#800000") /*Maroon*/, Color.decode("#00A36C") /*Green*/};
    public static void main(String[] args) {
       JFrame f = new JFrame("Risk Game");
       JPanel panel = new JPanel(new BorderLayout(5, 10));
@@ -21,13 +19,14 @@ public class Risk {
       button.addMouseListener(new MouseAdapter() {
          public void mouseClicked(MouseEvent e) {
             f.remove(panel);
+            int numberPlayers = (int) playerNumbers.getSelectedItem();
             String[] playerNames = new String[(int) playerNumbers.getSelectedItem()];
             for(int i = 0; i < playerNames.length; i++) {
-               playerNames[i] = "" + (i + 1);
+               playerNames[i] = Game.DEFAULT_PLAYER_NAMES[i];
             }
-            //CHANGE BACK
-            Game game = createGame(playerNames, (int) (0/*Math.random() * playerNames.length*/),
-                    "risk_data.txt", true, true);
+
+            Game game = createGame(Arrays.copyOfRange(Game.DEFAULT_PLAYER_NAMES, 0, numberPlayers),
+                    (int) (Math.random() * playerNames.length), "risk_data.txt", true, true);
             RiskView mainView = game.getRiskViews().get(0);
             mainView.addMouseListener(new MouseAdapter() {
                public void mouseClicked(MouseEvent e) {
@@ -127,10 +126,7 @@ public class Risk {
             }
          }
       }
-      Map<String, Color> playerColors = new HashMap<>();
-      for(int i = 0; i < playerNames.length; i++) {
-         playerColors.put(playerNames[i], POSSIBLE_PLAYER_COLORS[i]);
-      }
+
       Game g;
       if(useView) {
          RiskController rC = new RiskController();
@@ -138,7 +134,8 @@ public class Risk {
          if (randomlyPopulate) {
             g.randomlyPopulateBoard();
          }
-         RiskView rV = new RiskView(picFile, countryCoordinates, playerColors, g);
+         RiskView rV = new RiskView(picFile, countryCoordinates, playerNames.length, g);
+         rV.setPlayerColors(rV.getDefaultPlayerColors(playerNames));
          rC.addRiskView(rV);
       } else {
          g = new Game(b, players, startingPlayer);

@@ -6,6 +6,7 @@ public class Game {
     public static final int MAX_CARDS = 5;
     public static final int CARD_TURN_IN_SIZE = 3;
     public static final int BONUS_TROOPS_COUNTRY = 2;
+    public static final String[] DEFAULT_PLAYER_NAMES = {"1", "2", "3", "4", "5", "6"};
     private boolean needTurnInCards = false;
     private boolean turnInCardsTest = false;
     //Keeps track of the different cards.
@@ -939,15 +940,6 @@ public class Game {
             }
             nextPlayer();
 
-        }
-
-        //DELETE
-        for(Player p: players) {
-            if(players[startingPlayerIndex] != p) {
-                while(board.countriesOccupied(p).size() != 1) {
-                    board.changeOccupant(board.randomCountry(p), players[startingPlayerIndex], 10);
-                }
-            }
         }
 
         if(currentPhase != Phase.DRAFT) {

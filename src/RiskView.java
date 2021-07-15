@@ -7,18 +7,17 @@ public class RiskView extends JPanel {
     private Map<String, Point> countryCoordinates;
     private Image pic;
     private Game game;
-    private static Map<String, Color> playerColorsDefault;
+    private static final Map<String, Color> PLAYER_COLORS_DEFAULT;
     private Map<String, Color> playerColors;
-    //Color.BLACK, Color.GRAY, Color.BLUE,
-            //Color.decode("#800080") /*purple*/, Color.decode("#800000") /*Maroon*/, Color.decode("#00A36C") /*Green*/}
+
     static {
-        playerColorsDefault = new HashMap<>();
-        playerColorsDefault.put("1", Color.BLACK);
-        playerColorsDefault.put("2", Color.GRAY);
-        playerColorsDefault.put("3", Color.BLUE);
-        playerColorsDefault.put("4", Color.decode("#800080"));
-        playerColorsDefault.put("5", Color.decode("#800000"));
-        playerColorsDefault.put("6", Color.decode("#00A36C"));
+        PLAYER_COLORS_DEFAULT = new HashMap<>();
+        PLAYER_COLORS_DEFAULT.put(Game.DEFAULT_PLAYER_NAMES[0], Color.BLACK);
+        PLAYER_COLORS_DEFAULT.put(Game.DEFAULT_PLAYER_NAMES[1], Color.GRAY);
+        PLAYER_COLORS_DEFAULT.put(Game.DEFAULT_PLAYER_NAMES[2], Color.BLUE);
+        PLAYER_COLORS_DEFAULT.put(Game.DEFAULT_PLAYER_NAMES[3], Color.decode("#800080"));
+        PLAYER_COLORS_DEFAULT.put(Game.DEFAULT_PLAYER_NAMES[4], Color.decode("#800000"));
+        PLAYER_COLORS_DEFAULT.put(Game.DEFAULT_PLAYER_NAMES[5], Color.decode("#00A36C"));
     }
 
     private static final int X_OFFSET_ONE_DIGIT = 9;
@@ -55,17 +54,34 @@ public class RiskView extends JPanel {
         WEST,
         NORTHWEST
     }
-    public RiskView(String fileName, Map<String, Point> countryCoordinates, Map<String, Color> playerColors,
+    public RiskView(String fileName, Map<String, Point> countryCoordinates, int numberPlayers,
                            Game game) {
         this.countryCoordinates = countryCoordinates;
         ImageIcon board = new ImageIcon(fileName);
         pic = board.getImage();
         this.game = game;
-        this.playerColors = playerColors;
+        setDefaultPlayerColors(numberPlayers);
         this.setLayout(null);
     }
 
     public void setPlayerColors(Map<String, Color> playerColors) {
+        this.playerColors = playerColors;
+    }
+
+    public Map<String, Color> getDefaultPlayerColors(String[] playerNames) {
+        Map<String, Color> playerColors = new HashMap<>();
+        for(int i = 0; i < playerNames.length; i++) {
+            playerColors.put(playerNames[i], PLAYER_COLORS_DEFAULT.get(playerNames[i]));
+        }
+        return playerColors;
+    }
+
+    private void setDefaultPlayerColors(int numberPlayers) {
+        Map<String, Color> playerColors = new HashMap<>();
+        for(int i = 0; i < numberPlayers; i++) {
+            String playerName = "" + (i + 1);
+            playerColors.put(playerName, PLAYER_COLORS_DEFAULT.get(playerName));
+        }
         this.playerColors = playerColors;
     }
 
@@ -476,7 +492,7 @@ public class RiskView extends JPanel {
                 Map<String, Color> playerColors = new HashMap<>();
                 for(int i = 0; i < players.length; i++) {
                     players[i] = new Player("" + (i + 1));
-                    playerColors.put(players[i].getName(), playerColorsDefault.get(players[i].getName()));
+                    playerColors.put(players[i].getName(), PLAYER_COLORS_DEFAULT.get(players[i].getName()));
                 }
                 currentView.setPlayerColors(playerColors);
                 game.resetGame(players, (int) (Math.random() * players.length), false);
