@@ -7,7 +7,20 @@ public class RiskView extends JPanel {
     private Map<String, Point> countryCoordinates;
     private Image pic;
     private Game game;
+    private static Map<String, Color> playerColorsDefault;
     private Map<String, Color> playerColors;
+    //Color.BLACK, Color.GRAY, Color.BLUE,
+            //Color.decode("#800080") /*purple*/, Color.decode("#800000") /*Maroon*/, Color.decode("#00A36C") /*Green*/}
+    static {
+        playerColorsDefault = new HashMap<>();
+        playerColorsDefault.put("1", Color.BLACK);
+        playerColorsDefault.put("2", Color.GRAY);
+        playerColorsDefault.put("3", Color.BLUE);
+        playerColorsDefault.put("4", Color.decode("#800080"));
+        playerColorsDefault.put("5", Color.decode("#800000"));
+        playerColorsDefault.put("6", Color.decode("#00A36C"));
+    }
+
     private static final int X_OFFSET_ONE_DIGIT = 9;
     private static final int X_OFFSET_TWO_DIGITS = 4;
     private static final int Y_OFFSET = 18;
@@ -52,6 +65,10 @@ public class RiskView extends JPanel {
         this.setLayout(null);
     }
 
+    public void setPlayerColors(Map<String, Color> playerColors) {
+        this.playerColors = playerColors;
+    }
+
     public int getExtraBottomSpace() {
         return EXTRA_BOTTOM_SPACE;
     }
@@ -70,22 +87,32 @@ public class RiskView extends JPanel {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if(game.getCurrentReinforcementTroopsNumber() == 0 &&
-                game.getMinimumTroopsDefeatedCountry() != 0 && currentAttackCountry == null &&
-                !game.needTurnInCards()) {
-            setTroopsDefeatedCountry();
-        }
-        drawCardsInfo(g);
-        g.drawImage(pic, 0, 0, null);
-        drawCountryTroops(g);
-        if(!game.needTurnInCards()) {
-            drawBottomBar(g);
-            drawPhaseInformation(g);
+        if(game.getCurrentPhase() == Game.Phase.ENDGAME && currentAttackCountry != null) {
+            clearAndReset(this);
         } else {
-            Color color = new Color (128,128,128,160);
-            g.setColor(color);
-            g.fillRect(OFFSET_TURN_CARDS_IN, 0, this.getWidth() - OFFSET_TURN_CARDS_IN, this.getHeight());
-            g.fillRect(0, 0, OFFSET_TURN_CARDS_IN, OFFSET_LIST_CARDS_Y - OFFSET_INBETWEEN_TEXT);
+            if (game.getCurrentReinforcementTroopsNumber() == 0 &&
+                    game.getMinimumTroopsDefeatedCountry() != 0 && currentAttackCountry == null &&
+                    !game.needTurnInCards()) {
+                setTroopsDefeatedCountry();
+            }
+            if(game.getCurrentPhase() != Game.Phase.ENDGAME) {
+                drawCardsInfo(g);
+            }
+            g.drawImage(pic, 0, 0, null);
+            drawCountryTroops(g);
+            if (!game.needTurnInCards() && !(game.getCurrentPhase() == Game.Phase.ENDGAME)) {
+                drawBottomBar(g);
+                drawPhaseInformation(g);
+            } else {
+                Color color = new Color(128, 128, 128, 160);
+                g.setColor(color);
+                g.fillRect(OFFSET_TURN_CARDS_IN, 0, this.getWidth() - OFFSET_TURN_CARDS_IN, this.getHeight());
+                g.fillRect(0, 0, OFFSET_TURN_CARDS_IN, OFFSET_LIST_CARDS_Y - OFFSET_INBETWEEN_TEXT);
+
+                if (game.getCurrentPhase() == Game.Phase.ENDGAME) {
+                    drawEndGame();
+                }
+            }
         }
     }
 
@@ -319,14 +346,12 @@ public class RiskView extends JPanel {
                 yDiff  = countryCoordinates.get(currentFortifyCountry).getY() - countryY;
                 xDiff = countryCoordinates.get(currentFortifyCountry).getX() - countryX;
             }
-            if((yDiff > 0 && yDiff < d.getHeight() + COUNTRY_PANEL_OFFSET) &&
-                    (xDiff > -DIAMETER_CIRCLE && xDiff < d.getWidth())) {
-                if(direction == Direction.WEST) {
-                    direction = Direction.NORTHWEST;
-                } else {
+            if((yDiff > 0 && yDiff < d.getHeight() + COUNTRY_PANEL_OFFSET))
+                if(direction == Direction.SOUTH && xDiff > -DIAMETER_CIRCLE && xDiff < d.getWidth()) {
                     direction = Direction.NORTH;
+                } else if(direction == Direction.WEST && xDiff > -d.getWidth() && xDiff < DIAMETER_CIRCLE) {
+                    direction = Direction.NORTHWEST;
                 }
-            }
         }
         if(direction == Direction.SOUTH || direction == Direction.WEST) {
             countryY += COUNTRY_PANEL_OFFSET;
@@ -335,7 +360,7 @@ public class RiskView extends JPanel {
         }
 
         if(direction == Direction.WEST || direction == Direction.NORTHWEST) {
-            countryX = countryX - d.getWidth() + DIAMETER_CIRCLE;
+            countryX -= d.getWidth() - DIAMETER_CIRCLE;
         }
         return new Point((int) countryX,(int) countryY);
     }
@@ -436,6 +461,35 @@ public class RiskView extends JPanel {
         offsetFromTop += OFFSET_INBETWEEN_TEXT;
         g.drawString("Current Player: " + game.getCurrentPlayerName(), getWidth() - OFFSET_INFO, offsetFromTop);
 
+    }
+    private void drawEndGame() {
+        RiskView currentView = this;
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        JComboBox<Integer> playerNumbers = new JComboBox<>(Risk.NUMBER_PLAYERS);
+        panel.add(playerNumbers, BorderLayout.CENTER);
+        JButton button = new JButton("Play New Game");
+        JLabel label = new JLabel("Choose Number of Players");
+        panel.add(label, BorderLayout.NORTH);
+        button.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                Player[] players = new Player[(int) playerNumbers.getSelectedItem()];
+                Map<String, Color> playerColors = new HashMap<>();
+                for(int i = 0; i < players.length; i++) {
+                    players[i] = new Player("" + (i + 1));
+                    playerColors.put(players[i].getName(), playerColorsDefault.get(players[i].getName()));
+                }
+                currentView.setPlayerColors(playerColors);
+                game.resetGame(players, (int) (Math.random() * players.length), false);
+                game.randomlyPopulateBoard();
+                clearAndReset(panel.getParent());
+            }
+        });
+        panel.add(button, BorderLayout.SOUTH);
+        panel.setLocation(OFFSET_LIST_CARDS_X, OFFSET_LIST_CARDS_Y);
+        panel.setSize(panel.getPreferredSize());
+        panel.setVisible(true);
+        this.add(panel);
+        this.revalidate();
     }
 
     private void drawCardsInfo(Graphics g) {

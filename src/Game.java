@@ -28,9 +28,9 @@ public class Game {
    private final Board board;
 
    //Variables dealing with Players
-   private final Player[] players;
+   private Player[] players;
    private static final int MINIMUM_PLAYERS = 3;
-   private final int startingPlayerIndex;
+   private int startingPlayerIndex;
 
    //Keeps track of which players turn it is
    private int currentPlayerIndex;
@@ -84,6 +84,16 @@ public class Game {
         createDeck();
     }
 
+    public void resetGame(Player[] players, int startingPlayer, boolean setUpManually) {
+        this.players = players;
+        this.startingPlayerIndex = startingPlayer;
+        this.currentPlayerIndex = startingPlayerIndex;
+        if(setUpManually) {
+            currentPhase = Phase.DRAFT;
+        } else {
+            currentPhase = Phase.PREGAME;
+        }
+    }
     /**
      * For testing purposes only, manually change what you want the deck to be. Should only be used at the beginning of the game,
      * otherwise it may create strange behavior
@@ -909,7 +919,9 @@ public class Game {
         while (!(countriesOccupied == board.numberCountries())) {
 
             Country currentCountry = board.randomUnoccupiedCountry(countriesOccupied);
+
             currentCountry.changeOccupant(players[currentPlayerIndex], 1);
+
             countriesOccupied++;
             //Check to see if we have completed a full round of adding troops
             if(isFullTurnCycle()) {
@@ -919,6 +931,7 @@ public class Game {
 
 
         }
+
         while (numberTroopsAdd != 0) {
             board.increaseTroops(board.randomCountry(players[currentPlayerIndex]), 1);
             if(isFullTurnCycle()) {
@@ -928,6 +941,14 @@ public class Game {
 
         }
 
+        //DELETE
+        for(Player p: players) {
+            if(players[startingPlayerIndex] != p) {
+                while(board.countriesOccupied(p).size() != 1) {
+                    board.changeOccupant(board.randomCountry(p), players[startingPlayerIndex], 10);
+                }
+            }
+        }
 
         if(currentPhase != Phase.DRAFT) {
             changePhase();

@@ -5,7 +5,7 @@ import java.util.*;
 import java.io.*;
 import java.awt.*;
 public class Risk {
-   private static final Integer[] NUMBER_PLAYERS = {3,4,5,6};
+   public static final Integer[] NUMBER_PLAYERS = {3,4,5,6};
    private static final Color[] POSSIBLE_PLAYER_COLORS = {Color.BLACK, Color.GRAY, Color.BLUE,
            Color.decode("#800080") /*purple*/, Color.decode("#800000") /*Maroon*/, Color.decode("#00A36C") /*Green*/};
    public static void main(String[] args) {
@@ -25,7 +25,8 @@ public class Risk {
             for(int i = 0; i < playerNames.length; i++) {
                playerNames[i] = "" + (i + 1);
             }
-            Game game = createGame(playerNames, (int) (Math.random() * playerNames.length),
+            //CHANGE BACK
+            Game game = createGame(playerNames, (int) (0/*Math.random() * playerNames.length*/),
                     "risk_data.txt", true, true);
             RiskView mainView = game.getRiskViews().get(0);
             mainView.addMouseListener(new MouseAdapter() {
@@ -53,9 +54,9 @@ public class Risk {
       Scanner sc = new Scanner("");
       try {
          sc = new Scanner(new File(fileName));
-         
       } catch(FileNotFoundException e) {
          System.err.println("You need to include a valid file name");
+         return null;
       }
       String picFile = sc.nextLine().split(":")[1].trim();
       boolean moreContinents = true;
