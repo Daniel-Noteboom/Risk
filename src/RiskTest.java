@@ -481,30 +481,8 @@ public class RiskTest {
         indexes.add(1);
         g.changeGameState("one", Game.Phase.FORTIFY);
         Assert.assertFalse(g.turnInCards(indexes));
-
-
-
-
-
-
-
-
-
     }
 
-
-
-
-/**
- *         Country countryA = new Country("a", 4, playerOne);
- *         Country countryB = new Country("b", 4, playerTwo);
- *         Country countryC = new Country("c", 3, playerFour);
- *         Country countryD = new Country("d", 4, playerThree);
- *         Country countryE = new Country("e", 1, playerFour);
- *         Country countryE2 = new Country("e2", 1, playerFour);
- *         Country countryF = new Country("f", 2, playerFour);
- *         Country countryG = new Country("g", 5, playerFive);
- */
     @Test
     public void testCards() {
         List<Card> cards = new ArrayList<>();
@@ -810,12 +788,6 @@ public class RiskTest {
             Assert.assertTrue(g.attack("b", attackDice, "a", defendDice));
         }
         Assert.assertEquals(g.getCurrentPhase(), Game.Phase.ENDGAME);
-
-
-
-
-
-
     }
 }
 
